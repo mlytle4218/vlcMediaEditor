@@ -3,7 +3,8 @@ import vlc
 import sys
 import curses
 from curses import panel
-from playsound import playsound
+# from playsound import playsound
+import playsound
 import datetime, time
 
 class Mark():
@@ -13,12 +14,6 @@ class Mark():
 
     def __str__(self):
         return str( self.start ) + ":" + str( self.end )
-    
-    def start(self, start):
-        self.start = start
-    
-    def end(self, end):
-        self.end = end
 
     def reset(self):
         if self.start > self.end:
@@ -70,7 +65,7 @@ class MyApp(object):
 
         sys.argv.pop(0)
         if sys.argv:
-            self.instance = vlc.Instance()
+            self.instance = vlc.Instance(('--no-video'))
             self.song = self.instance.media_player_new()
             self.media = self.instance.media_new(sys.argv[0])
             self.song.set_media(self.media)
