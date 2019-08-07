@@ -6,6 +6,8 @@ from curses import panel
 import datetime, time
 import threading
 import math
+from operator import itemgetter 
+from playsound import playsound
 
 class WorkerThread(threading.Thread):
     """ A worker thread that takes directory names from a queue, finds all
@@ -24,7 +26,13 @@ class WorkerThread(threading.Thread):
         self.song = song
         self.stoprequest = threading.Event()
         self.last = 0
+
         self.current = 0
+        self.difference = 0
+
+
+        
+
 
     def run(self):
         # As long as we weren't asked to stop, try to take new tasks from the
@@ -35,22 +43,39 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
-                self.song.window.addstr(0, 0, str( self.song.song.get_position() ))
-                # with open("test.txt", "a") as myfile:
-                #     string=datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-                #     string=string+ ' - ' + str( self.song.song.get_position() ) + '\n'
-                #     myfile.write(string)
+                cnt = 0 
+                for each in self.song.marks:
+                    if self.song.now_okay and each.start > ( self.current - ( self.difference ) ) and each.start < ( self.current + ( self.difference ) ):
+                        self.song.load_and_play(self.song.asc)
+                    if self.song.now_okay and each.end > ( self.current - ( self.difference ) ) and each.end < ( self.current + ( self.difference ) ):
+                        self.song.load_and_play(self.song.des)
+                self.song.window.clear()
+                self.song.window.addstr(cnt, 0, str( self.current ))
+                cnt+=1
+                out = self.song.duration * self.current
+
+                millis = int(out)
+                seconds=(millis/1000)%60
+                minutes=(millis/(1000*60))%60
+                minutes = int(minutes)
+                hours=(millis/(1000*60*60))%24
+                time = ""
+                if hours >= 1:
+                    time = "{}:{:02d}:{:02d}".format(hours, minutes, seconds)
+                else:
+                    time = "{}:{:02.3f}".format(minutes, seconds)
+
+                self.song.window.addstr(cnt, 0, str( time ))
+                cnt+=1
+                for each in self.song.marks:
+                    self.song.window.addstr(cnt, 0, str( each.start ))
+                    cnt +=1 
+                    self.song.window.addstr(cnt, 0, str( each.end ))
+                    cnt+=1
+                self.difference = (125 / self.song.duration) * self.song.rate
+
                 self.last = self.current
-            # print('hi')
-            # self.song.window.addstr(1, 1, str( self.song.media.get_duration() ))
-            # self.song.window.addstr(1,1, str( self.out ))
-            # self.out += 1
-            # try:
-            #     dirname = self.dir_q.get(True, 0.05)
-            #     filenames = list(self._files_in_dir(dirname))
-            #     self.result_q.put((self.name, dirname, filenames))
-            # except Queue.Empty:
-            #     continue
+                self.song.window.refresh()
 
     def join(self, timeout=None):
         self.stoprequest.set()
@@ -59,11 +84,14 @@ class WorkerThread(threading.Thread):
 
 class Mark():
     def __init__(self):
-        self.start = 0
-        self.end = 0
+        self.start = -1
+        self.end = -1
 
     def __str__(self):
         return str( self.start ) + ":" + str( self.end )
+    
+    def __getitem__(self, item):
+         return self.start
 
     def reset(self):
         if self.start > self.end:
@@ -87,11 +115,24 @@ class MyApp(object):
 
 
     def load_and_play(self, input_file):
-        asc_instance = vlc.Instance(('--no-video'))
-        asc = asc_instance.media_player_new()
-        asc_media = asc_instance.media_new(input_file)
-        asc.set_media(asc_media)
-        asc.play()
+        playsound(input_file)
+
+    def milliseconds_to_hms(self, milliseconds):
+        millis = int(milliseconds * self.duration)
+        seconds=(millis/1000)%60
+        part_of_seconds = int((seconds - math.floor(seconds)) * 1000)
+        seconds = int(seconds)
+        minutes=(millis/(1000*60))%60
+        minutes = int(minutes)
+        hours=(millis/(1000*60*60))%24
+        hours = int(hours)
+        time = ""
+        if hours >= 1:
+            time = "{}:{:02d}:{:02d}.{}".format(hours, minutes, seconds, part_of_seconds)
+        else:
+            time = "{}:{:02d}.{}".format(minutes, seconds, part_of_seconds)
+
+        return time
 
          
 
@@ -105,6 +146,8 @@ class MyApp(object):
         self.errorSound = 'error.wav'
         self.asc = "assending.wav"
         self.des = "desending.wav"
+        self.current_mark = None
+        self.now_okay = True
 
         
 
@@ -117,13 +160,17 @@ class MyApp(object):
         self.window = stdscreen.subwin(0,0)                                  
         self.window.keypad(1)                                                
         self.panel = panel.new_panel(self.window)                            
-        self.panel.hide()                                                    
+        self.panel.hide()                                                  
         panel.update_panels()                                                
 
         self.position = 0
         self.panel.top()                                                     
         self.panel.show()                                                    
         self.window.clear()     
+        n = Mark()
+        n.start = 0.015
+        n.end = 0.035
+        self.marks.append(n)
 
         sys.argv.pop(0)
         if sys.argv:
@@ -141,14 +188,11 @@ class MyApp(object):
             self.duration = self.media.get_duration()                             
 
         while True:
-            self.position = self.song.get_position()     
-            # self.window.addstr(1, 1, str( self.song.get_position() ))     
-            # self.log(self.song.get_position())                                              
+            self.position = self.song.get_position()                                            
             self.window.refresh()                                            
             curses.doupdate()                                                                 
 
-            key = self.window.getch()
-            # self.log('now')                             
+            key = self.window.getch()                            
                           
             # Speeds up the playback
             if key == curses.KEY_UP:
@@ -162,22 +206,19 @@ class MyApp(object):
                 cur_pos = self.song.get_position()
                 cur_sec = round( cur_pos * self.duration ) - 5000
                 new_pos = cur_sec / self.duration
+                self.now_okay = False
                 self.song.set_position(new_pos)
                 self.song.play()
+                self.now_okay = True
 
             elif key == curses.KEY_RIGHT:
                 cur_pos = self.song.get_position()
                 cur_sec = round( cur_pos * self.duration ) + 5000
                 new_pos = cur_sec / self.duration
-                self.log( new_pos )
+                self.now_okay = False
                 self.song.set_position(new_pos)
                 self.song.play()
-
-            # Starts the media
-            elif key == ord('s'):
-                if self.song.is_playing:
-                    self.song.pause()
-                    self.song.set_position(0)
+                self.now_okay = True
             
             # pauses and plays the media
             elif key == ord(' '):
@@ -192,31 +233,74 @@ class MyApp(object):
 
             # Create a new mark
             elif key == ord('n'):
-                try: 
-                    self.marks[self.markItr].reset()
-                except IndexError:
-                    pass
-                self.marks.append(Mark())
-                self.markItr = len( self.marks ) - 1
+                # if there is not an active mark, make one
+                if self.current_mark:
+                    self.load_and_play(self.errorSound)
+                else: 
+                    self.current_mark = Mark()
+
+            # Saves a current mark
+            elif key == ord('s'):
+                # check to make sure there is an active mark and that both the beginning and end have 
+                # been entered
+                if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
+                        self.current_mark.reset()
+                        self.marks.append(self.current_mark)
+                        self.markItr = len( self.marks ) - 1
+                        self.current_mark = None
+                        self.marks = sorted(self.marks, key=itemgetter('start'))
+                else:
+                    self.load_and_play(self.errorSound)
+
 
             # Record the beginning of the mark
             elif key == ord('b'):
-                try:
-                    self.marks[self.markItr].start = self.song.get_position()
-                except IndexError:
+                #make sure there is and active mark
+                if self.current_mark:
+                    begin_position_check = self.song.get_position()
+                    okay = True
+                    # cycle through the saved marks and make sure the current position does 
+                    # overlap with them
+                    for each in self.marks:
+                        if begin_position_check > each.start and begin_position_check < each.end:
+                            okay =  False
+                    if okay:
+                        self.current_mark.start = begin_position_check
+                    else:
+                        self.log('overlap')
+                        self.load_and_play(self.errorSound)
+                else:
+                    self.log('no current_mark')
                     self.load_and_play(self.errorSound)
+
 
             # Record the end of the mark
             elif key == ord('e'):
-                try: 
-                    self.marks[self.markItr].end = self.song.get_position()
-                except IndexError:
+                # make sure there is an active mark
+                if self.current_mark:
+                    begin_position_check = self.song.get_position()
+                    okay = True
+                    # cycle through the saved marks and make sure the current position does 
+                    # overlap with them
+                    for each in self.marks:
+                        if begin_position_check > each.start and begin_position_check < each.end:
+                            okay =  False
+                    if okay:
+                        self.current_mark.end = begin_position_check
+                    else:
+                        self.load_and_play(self.errorSound)
+                else:
                     self.load_and_play(self.errorSound)
 
             # Testing the markIter
             elif key == ord('p'):
                 temp = self.marks[self.markItr]
                 self.log( temp )
+
+            elif key == ord('m'):
+                for each in self.marks:
+                    self.log( self.milliseconds_to_hms(each.start) )
+                    self.log( self.milliseconds_to_hms(each.end) )
                 
             # Quit the program
             elif key == ord('q'):
