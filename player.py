@@ -9,6 +9,8 @@ import math
 from operator import itemgetter 
 from playsound import playsound
 
+import subprocess, os
+
 class WorkerThread(threading.Thread):
     """ A worker thread that takes directory names from a queue, finds all
         files in them recursively and reports the result.
@@ -30,6 +32,13 @@ class WorkerThread(threading.Thread):
         self.current = 0
         self.difference = 0
 
+    def log(self, input):
+        input = str( input )
+        with open("test.txt", "a") as myfile:
+            string=datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+            string=string+ ' - ' +input + '\n'
+            myfile.write(string)
+
 
         
 
@@ -43,39 +52,43 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
-                cnt = 0 
-                for each in self.song.marks:
-                    if self.song.now_okay and each.start > ( self.current - ( self.difference ) ) and each.start < ( self.current + ( self.difference ) ):
-                        self.song.load_and_play(self.song.asc)
-                    if self.song.now_okay and each.end > ( self.current - ( self.difference ) ) and each.end < ( self.current + ( self.difference ) ):
-                        self.song.load_and_play(self.song.des)
-                self.song.window.clear()
-                self.song.window.addstr(cnt, 0, str( self.current ))
-                cnt+=1
-                out = self.song.duration * self.current
-
-                millis = int(out)
-                seconds=(millis/1000)%60
-                minutes=(millis/(1000*60))%60
-                minutes = int(minutes)
-                hours=(millis/(1000*60*60))%24
-                time = ""
-                if hours >= 1:
-                    time = "{}:{:02d}:{:02d}".format(hours, minutes, seconds)
-                else:
-                    time = "{}:{:02.3f}".format(minutes, seconds)
-
-                self.song.window.addstr(cnt, 0, str( time ))
-                cnt+=1
-                for each in self.song.marks:
-                    self.song.window.addstr(cnt, 0, str( each.start ))
-                    cnt +=1 
-                    self.song.window.addstr(cnt, 0, str( each.end ))
+                try:
+                    cnt = 0 
+                    for each in self.song.marks:
+                        if self.song.now_okay and each.start > ( self.current - ( self.difference ) ) and each.start < ( self.current + ( self.difference ) ):
+                            self.song.load_and_play(self.song.asc)
+                        if self.song.now_okay and each.end > ( self.current - ( self.difference ) ) and each.end < ( self.current + ( self.difference ) ):
+                            self.song.load_and_play(self.song.des)
+                    self.song.window.clear()
+                    self.song.window.addstr(cnt, 0, str( self.current ))
                     cnt+=1
-                self.difference = (125 / self.song.duration) * self.song.rate
+                    out = self.song.duration * self.current
 
-                self.last = self.current
-                self.song.window.refresh()
+                    millis = int(out)
+                    seconds=(millis/1000)%60
+                    minutes=(millis/(1000*60))%60
+                    minutes = int(minutes)
+                    hours=(millis/(1000*60*60))%24
+                    time = ""
+                    if hours >= 1:
+                        time = "{}:{:02d}:{:02d}".format(hours, minutes, seconds)
+                    else:
+                        time = "{}:{:02.3f}".format(minutes, seconds)
+
+                    self.song.window.addstr(cnt, 0, str( time ))
+                    cnt+=1
+                    for each in self.song.marks:
+                        self.song.window.addstr(cnt, 0, str( each.start ))
+                        cnt +=1 
+                        self.song.window.addstr(cnt, 0, str( each.end ))
+                        cnt+=1
+                    self.difference = (125 / self.song.duration) * self.song.rate
+
+                    self.last = self.current
+                    self.song.window.refresh()
+                except Exception as e:
+                    # pass
+                    self.log(e)
 
     def join(self, timeout=None):
         self.stoprequest.set()
@@ -117,20 +130,25 @@ class MyApp(object):
     def load_and_play(self, input_file):
         playsound(input_file)
 
-    def milliseconds_to_hms(self, milliseconds):
-        millis = int(milliseconds * self.duration)
+    def mark_to_milliseconds(self, mark):
+        milliseconds = int(self.duration * mark)
+        return milliseconds
+
+    def milliseconds_to_hms(self, millis):
+        millis = int(millis)
         seconds=(millis/1000)%60
         part_of_seconds = int((seconds - math.floor(seconds)) * 1000)
         seconds = int(seconds)
         minutes=(millis/(1000*60))%60
         minutes = int(minutes)
         hours=(millis/(1000*60*60))%24
-        hours = int(hours)
-        time = ""
-        if hours >= 1:
-            time = "{}:{:02d}:{:02d}.{}".format(hours, minutes, seconds, part_of_seconds)
+        time = ''
+        if hours >= 1 and minutes >= 1:
+            time = ("{}:{:02d}:{:02d}.{}".format(hours, minutes, seconds, part_of_seconds))
+        elif minutes >= 1:
+            time = ("{:02d}:{:02d}.{}".format(minutes, seconds, part_of_seconds))
         else:
-            time = "{}:{:02d}.{}".format(minutes, seconds, part_of_seconds)
+            time = ("{:02d}.{}".format(seconds, part_of_seconds))
 
         return time
 
@@ -167,16 +185,21 @@ class MyApp(object):
         self.panel.top()                                                     
         self.panel.show()                                                    
         self.window.clear()     
-        n = Mark()
-        n.start = 0.015
-        n.end = 0.035
-        self.marks.append(n)
+        # n = Mark()
+        # n.start = 0.015
+        # n.end = 0.075
+        # self.marks.append(n)
+        # n = Mark()
+        # n.start = 0.125
+        # n.end = 0.268
+        # self.marks.append(n)
 
         sys.argv.pop(0)
         if sys.argv:
+            self.original_file = sys.argv[0]
             self.instance = vlc.Instance(('--no-video'))
             self.song = self.instance.media_player_new()
-            self.media = self.instance.media_new(sys.argv[0])
+            self.media = self.instance.media_new(self.original_file)
             self.song.set_media(self.media)
             self.song.play()
             self.media.parse()
@@ -207,6 +230,8 @@ class MyApp(object):
                 cur_sec = round( cur_pos * self.duration ) - 5000
                 new_pos = cur_sec / self.duration
                 self.now_okay = False
+                if new_pos < 0:
+                    new_pos = 0
                 self.song.set_position(new_pos)
                 self.song.play()
                 self.now_okay = True
@@ -297,21 +322,80 @@ class MyApp(object):
                 temp = self.marks[self.markItr]
                 self.log( temp )
 
-            elif key == ord('m'):
-                for each in self.marks:
-                    self.log( self.milliseconds_to_hms(each.start) )
-                    self.log( self.milliseconds_to_hms(each.end) )
+            # elif key == ord('m'):
+            #     for each in self.marks:
+            #         self.log( self.milliseconds_to_hms(each.start) )
+            #         self.log( self.milliseconds_to_hms(each.end) )
                 
             # Quit the program
             elif key == ord('q'):
                 self.poll_thread.join()
                 break
 
+            elif key == ord('o'):
+                self.poll_thread.join()
+                self.song.stop()
+
+                filename, file_extension = os.path.splitext(self.original_file)
+                self.temp_file = filename + "-old" + file_extension
+                os.rename( self.original_file, self.temp_file)
+                command = ['ffmpeg',"-loglevel","error",'-i',self.temp_file]
+
+
+                select = """ffmpeg -i {} -vf "select='""".format(self.temp_file)
+                select = "select='"
+                aselect = "aselect='"
+                last = 0
+                for each in self.marks:
+                    temp = each.end
+                    each.end = each.start
+                    each.start = last
+                    last = temp
+                n = Mark()
+                n.start = last
+                self.log( str( int( self.duration /1000 ) ) )
+                n.end = 1
+                self.marks.append(n)
+                for i, each in enumerate(self.marks):
+                    if i == 0:
+                        select += """between(t,{},{})""".format(
+                            int(  self.mark_to_milliseconds( each.start ) /1000) ,
+                            int(  self.mark_to_milliseconds( each.end ) /1000) ,
+                        )
+                        aselect += """between(t,{},{})""".format(
+                            int(  self.mark_to_milliseconds( each.start ) /1000) ,
+                            int(  self.mark_to_milliseconds( each.end ) /1000) ,
+                        )
+                    else :
+                        select += """+between(t,{},{})""".format(
+                            int(  self.mark_to_milliseconds( each.start ) /1000) ,
+                            int(  self.mark_to_milliseconds( each.end ) /1000) ,
+                        )
+                        aselect += """+between(t,{},{})""".format(
+                            int(  self.mark_to_milliseconds( each.start ) /1000) ,
+                            int(  self.mark_to_milliseconds( each.end ) /1000) ,
+                        )
+
+                select += """',setpts=N/FRAME_RATE/TB """
+                aselect += """',asetpts=N/SR/TB"""
+                command.append('-vf')
+                command.append(select)
+                command.append('-af')
+                command.append(aselect)
+                command.append(self.original_file)
+                self.command = command
+                self.log( command )
+                subprocess.call(command)
+                os.remove(self.temp_file)
+                break
+
+        
 
         self.window.clear()                                                  
         self.panel.hide()                                                    
         panel.update_panels()                                                
-        curses.doupdate()                                
+        curses.doupdate() 
+                             
 
 if __name__ == '__main__':                                                       
     curses.wrapper(MyApp)
