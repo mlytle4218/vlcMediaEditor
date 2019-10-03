@@ -16,7 +16,7 @@ import os
 from workerThread import WorkerThread
 from mark import Mark
 import sounds
-import keyboard_config
+import config
 
 
 def py_error_handler(filename, line, function, err, fmt):
@@ -109,30 +109,30 @@ class MyApp(object):
             key = self.window.getch()
 
             # Speeds up the playback
-            if key == keyboard_config.play_speed_up:
-                self.update_rate(keyboard_config.play_speed_rate)
+            if key == config.play_speed_up:
+                self.update_rate(config.play_speed_rate)
 
             # Slows down the playback
-            elif key == keyboard_config.play_speed_down:
-                self.update_rate(-keyboard_config.play_speed_rate)
+            elif key == config.play_speed_down:
+                self.update_rate(-config.play_speed_rate)
 
             # Jumps back 5 seconds
-            elif key == keyboard_config.jump_back:
-                self.changePositionBySecondOffset(-keyboard_config.jump_time, self.song.get_position())
+            elif key == config.jump_back:
+                self.changePositionBySecondOffset(-config.jump_time, self.song.get_position())
 
             # Jump ahead five seconds
-            elif key == keyboard_config.jump_forward:
-                self.changePositionBySecondOffset(keyboard_config.jump_time, self.song.get_position())
+            elif key == config.jump_forward:
+                self.changePositionBySecondOffset(config.jump_time, self.song.get_position())
 
             # pauses and plays the media
-            elif key == keyboard_config.play_pause:
+            elif key == config.play_pause:
                 if self.song.is_playing:
                     self.song.pause()
                 else:
                     self.song.play()
 
             # Create a new mark
-            elif key == keyboard_config.mark_create_new:
+            elif key == config.mark_create_new:
                 # if there is not an active mark, make one
                 if self.current_mark:
                     sounds.error_sound()
@@ -140,7 +140,7 @@ class MyApp(object):
                     self.current_mark = Mark()
 
             # Saves a current mark
-            elif key == keyboard_config.mark_save_current:
+            elif key == config.mark_save_current:
                 # check to make sure there is an active mark and that both the beginning and end have
                 # been entered
                 if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
@@ -153,7 +153,7 @@ class MyApp(object):
                     sounds.error_sound()
 
             # Record the beginning of the mark
-            elif key == keyboard_config.mark_record_start_posistion:
+            elif key == config.mark_record_start_posistion:
                 # make sure there is and active mark
                 if self.current_mark:
                     begin_position_check = self.song.get_position()
@@ -173,7 +173,7 @@ class MyApp(object):
                     sounds.error_sound()
 
             # Record the end of the mark
-            elif key == keyboard_config.mark_record_end_posistion:
+            elif key == config.mark_record_end_posistion:
                 # make sure there is an active mark
                 if self.current_mark:
                     begin_position_check = self.song.get_position()
@@ -190,18 +190,18 @@ class MyApp(object):
                 else:
                     sounds.error_sound()
 
-            elif key == keyboard_config.cycle_through_marks:
+            elif key == config.cycle_through_marks:
                 self.markItr = 0
                 self.current_mark = self.marks[self.markItr]
 
             # Quit the program
-            elif key == keyboard_config.quit_program:
+            elif key == config.quit_program:
                 self.poll_thread.join()
                 break
 
             # Do the actual edits taking the marks and applying them to
             # to the original file
-            elif key == keyboard_config.begin_edits:
+            elif key == config.begin_edits:
                 self.poll_thread.join()
                 self.song.stop()
 
