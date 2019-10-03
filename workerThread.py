@@ -2,6 +2,7 @@
 import datetime
 import time
 import threading
+import sounds
 
 class WorkerThread(threading.Thread):
     """ A worker thread that takes directory names from a queue, finds all
@@ -46,10 +47,10 @@ class WorkerThread(threading.Thread):
                     cnt = 0
                     for each in self.song.marks:
                         if self.song.now_okay and each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
-                            self.song.mark_start_sound()
+                            sounds.mark_start_sound()
 
                         if self.song.now_okay and each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
-                            self.song.mark_end_sound()
+                            sounds.mark_end_sound()
 
                     self.song.window.clear()
                     #print out the current vlc decimal position
@@ -94,7 +95,7 @@ class WorkerThread(threading.Thread):
         else:
             time = "{}:{:02.3f}".format(minutes, seconds)
         return time
-        
+
     # used to shut down the worker thread
     def join(self, timeout=None):
         self.stoprequest.set()
