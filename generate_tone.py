@@ -52,7 +52,7 @@ def data_for_freq(frequency: float, time: float = None):
         # though this is redundant since math.sin is a looping function
         # b = b - int(b)
 
-        c = b * (2 * math.pi)
+        c = b * (2*math.pi)
         # explanation for c
         # now we map b to between 0 and 2*math.PI
         # since 0 - 2*PI, 2*PI - 4*PI, ...
@@ -78,12 +78,22 @@ def play(frequency: float, time: float):
     play a frequency for a fixed time!
     """
     frames = data_for_freq(frequency, time)
+    frames2 = data_for_freq(frequency*10, time)
+
     stream = pyaudio.PyAudio().open(format=FORMAT, channels=CHANNELS, rate=RATE, output=True)
     stream.write(frames)
+    stream.write(frames2)
+    total_frames = []
+    for itr,each in enumerate(frames):
+        total_frames.append(frames[itr] - frames2[itr])
+
+    number_of_bytes = str(len(total_frames))
+    total_frames = struct.pack(number_of_bytes+'h', *total_frames)
+    stream.write(total_frames)
     stream.stop_stream()
     stream.close()
 
 
 if __name__ == "__main__":
-    play(200, .2)
-    # play(440, .4)
+    play(200, .7)
+    # play(440, .7)

@@ -8,7 +8,6 @@ import time
 import threading
 import math
 from operator import itemgetter
-from playsound import playsound
 from ctypes import *
 
 import subprocess
@@ -144,9 +143,6 @@ class MyApp(object):
             string = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
             string = string + ' - ' + input + '\n'
             myfile.write(string)
-
-    def load_and_play(self, input_file):
-        playsound(input_file)
 
     def mark_to_milliseconds(self, mark):
         milliseconds = int(self.duration * mark)
