@@ -177,9 +177,6 @@ class MyApp(object):
         self.is_marking = False
         self.marks = []
         self.markItr = 0
-        self.errorSound = 'error.wav'
-        self.asc = "assending.wav"
-        self.des = "desending.wav"
         self.current_mark = None
         self.now_okay = True
         self.FORMAT = pyaudio.paInt16
@@ -244,6 +241,7 @@ class MyApp(object):
             elif key == curses.KEY_DOWN:
                 self.update_rate(-0.25)
 
+            # Jumps back 5 seconds
             elif key == curses.KEY_LEFT:
                 cur_pos = self.song.get_position()
                 cur_sec = round(cur_pos * self.duration ) - 5000
@@ -255,6 +253,7 @@ class MyApp(object):
                 self.song.play()
                 self.now_okay = True
 
+            # Jump ahead five seconds
             elif key == curses.KEY_RIGHT:
                 cur_pos = self.song.get_position()
                 cur_sec = round(cur_pos * self.duration ) + 5000
@@ -334,11 +333,6 @@ class MyApp(object):
             elif key == ord('p'):
                 temp = self.marks[self.markItr]
                 self.log(temp )
-
-            # elif key == ord('m'):
-            #     for each in self.marks:
-            #         self.log( self.milliseconds_to_hms(each.start) )
-            #         self.log( self.milliseconds_to_hms(each.end) )
 
             # Quit the program
             elif key == ord('q'):
