@@ -81,11 +81,25 @@ class MyApp(object):
         return wavedata
 
     # def mark_start_sound(self, frequency: float, time: float):
+    def error_sound(self):
+        frequency = 400.0
+        time = 0.3
+        """
+        play an error tone
+        """
+        frames = self.data_for_freq(frequency, time)
+
+        stream = pyaudio.PyAudio().open(format=self.FORMAT, channels=self.CHANNELS,
+                                 rate=self.RATE, output=True)
+        stream.write(frames)
+        stream.stop_stream()
+        stream.close()
+
     def mark_start_sound(self):
         frequency = 400.0
         time = 0.3
         """
-        play a frequency for a fixed time!
+        play a set of tones going up
         """
         number = 5
         frames_total = bytes()
@@ -104,14 +118,13 @@ class MyApp(object):
         frequency = 400.0
         time = 0.3
         """
-        play a frequency for a fixed time!
+        play a set of quick tones going down
         """
         number = 5
         frames_total = bytes()
         for itr in range(number):
             freq = frequency*( 1 - (itr/10) )
             split = time/number
-            self.log("{}:{}".format(freq, split))
 
             frames = self.data_for_freq(freq, split)
             frames_total += frames
@@ -261,16 +274,12 @@ class MyApp(object):
                     self.song.pause()
                 else:
                     self.song.play()
-
-            # Testing sound overlay
-            elif key == ord('w'):
-                self.load_and_play(self.asc)
-
+                    
             # Create a new mark
             elif key == ord('n'):
                 # if there is not an active mark, make one
                 if self.current_mark:
-                    self.load_and_play(self.errorSound)
+                    self.error_sound()
                 else:
                     self.current_mark = Mark()
 
@@ -285,7 +294,7 @@ class MyApp(object):
                     self.current_mark = None
                     self.marks = sorted(self.marks, key=itemgetter('start'))
                 else:
-                    self.load_and_play(self.errorSound)
+                    self.error_sound()
 
             # Record the beginning of the mark
             elif key == ord('b'):
@@ -302,10 +311,10 @@ class MyApp(object):
                         self.current_mark.start = begin_position_check
                     else:
                         self.log('overlap')
-                        self.load_and_play(self.errorSound)
+                        self.error_sound()
                 else:
                     self.log('no current_mark')
-                    self.load_and_play(self.errorSound)
+                    self.error_sound()
 
             # Record the end of the mark
             elif key == ord('e'):
@@ -321,9 +330,9 @@ class MyApp(object):
                     if okay:
                         self.current_mark.end = begin_position_check
                     else:
-                        self.load_and_play(self.errorSound)
+                        self.error_sound()
                 else:
-                    self.load_and_play(self.errorSound)
+                    self.error_sound()
 
             # Testing the markIter
             elif key == ord('p'):

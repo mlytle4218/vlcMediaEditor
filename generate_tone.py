@@ -77,16 +77,13 @@ def play(frequency: float, time: float):
     """
     play a frequency for a fixed time!
     """
-    frames = data_for_freq(frequency, time/2)
-    frames2 = data_for_freq(frequency*1.1,time/2)
-
+    frames = data_for_freq(frequency, time)
     stream = pyaudio.PyAudio().open(format=FORMAT, channels=CHANNELS, rate=RATE, output=True)
     stream.write(frames)
-    stream.write(frames2)
     stream.stop_stream()
     stream.close()
 
 
 if __name__ == "__main__":
-    play(400, .3)
+    play(200, .2)
     # play(440, .4)
