@@ -5,14 +5,8 @@ import threading
 import sounds
 
 class WorkerThread(threading.Thread):
-    """ A worker thread that takes directory names from a queue, finds all
-        files in them recursively and reports the result.
-
-        Input is done by placing directory names (as strings) into the
-        Queue passed in dir_q.
-
-        Output is done by placing tuples into the Queue passed in result_q.
-        Each tuple is (thread name, dirname, [list of files]).
+    """ A worker thread that polls the vlc api for current position 
+        and calls options as necessary
 
         Ask the thread to stop by calling its join() method.
     """

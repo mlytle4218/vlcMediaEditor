@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-import vlc
-import sys
 import curses
-from curses import panel
 import datetime
-import time
-from operator import itemgetter
-from ctypes import (CFUNCTYPE, c_char_p, c_int, cdll)
-# from ctypes import *
-import ctypes
-import subprocess
 import os
+import subprocess
+import sys
+import time
+from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
+from curses import panel
+from operator import itemgetter
 
-
-from workerThread import WorkerThread
-from mark import Mark
-import sounds
 import config
+import sounds
+import vlc
+from mark import Mark
+from workerThread import WorkerThread
 
 
 def py_error_handler(filename, line, function, err, fmt):
@@ -24,7 +21,6 @@ def py_error_handler(filename, line, function, err, fmt):
     with open("test.txt", "a") as myfile:
         timestamp = datetime.datetime.fromtimestamp(
             time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        # string = string + ' - ' + str(fmt) + '\n'
         string = "{}:{}:{}:{}:{}:{}".format(
             timestamp, filename, line, function, err, fmt)
         myfile.write(string)
@@ -118,11 +114,13 @@ class MyApp(object):
 
             # Jumps back 5 seconds
             elif key == config.jump_back:
-                self.changePositionBySecondOffset(-config.jump_time, self.song.get_position())
+                self.changePositionBySecondOffset(
+                    -config.jump_time, self.song.get_position())
 
             # Jump ahead five seconds
             elif key == config.jump_forward:
-                self.changePositionBySecondOffset(config.jump_time, self.song.get_position())
+                self.changePositionBySecondOffset(
+                    config.jump_time, self.song.get_position())
 
             # pauses and plays the media
             elif key == config.play_pause:
@@ -133,136 +131,185 @@ class MyApp(object):
 
             # Create a new mark
             elif key == config.mark_create_new:
-                # if there is not an active mark, make one
-                if self.current_mark:
-                    sounds.error_sound()
-                else:
-                    self.current_mark = Mark()
+                try:
+                    if self.current_mark:
+                        sounds.error_sound()
+                    else:
+                        self.current_mark = Mark()
+                except Exception as ex:
+                    self.log(ex)
 
             # Saves a current mark
             elif key == config.mark_save_current:
-                # check to make sure there is an active mark and that both the beginning and end have
-                # been entered
-                if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
-                    self.current_mark.reset()
-                    self.marks.append(self.current_mark)
-                    self.markItr = len(self.marks) - 1
-                    self.current_mark = None
-                    self.marks = sorted(self.marks, key=itemgetter('start'))
-                else:
-                    sounds.error_sound()
+                try:
+                    self.saveCurrentMark()
+                except Exception as ex:
+                    self.log(ex)
 
             # Record the beginning of the mark
-            elif key == config.mark_record_start_posistion:
-                # make sure there is and active mark
-                if self.current_mark:
-                    begin_position_check = self.song.get_position()
-                    okay = True
-                    # cycle through the saved marks and make sure the current position does
-                    # overlap with them
-                    for each in self.marks:
-                        if each.start <= begin_position_check <= each.end:
-                            okay = False
-                    if okay:
-                        self.current_mark.start = begin_position_check
-                    else:
-                        self.log('overlap')
-                        sounds.error_sound()
-                else:
-                    self.log('no current_mark')
-                    sounds.error_sound()
+            elif key == config.mark_record_start_position:
+                try:
+                    self.startMarkPosition()
+                except Exception as ex:
+                    self.log(ex)
 
             # Record the end of the mark
-            elif key == config.mark_record_end_posistion:
-                # make sure there is an active mark
-                if self.current_mark:
-                    begin_position_check = self.song.get_position()
-                    okay = True
-                    # cycle through the saved marks and make sure the current position does
-                    # overlap with them
-                    for each in self.marks:
-                        if each.start <= begin_position_check <= each.end:
-                            okay = False
-                    if okay:
-                        self.current_mark.end = begin_position_check
-                    else:
-                        sounds.error_sound()
-                else:
-                    sounds.error_sound()
+            elif key == config.mark_record_end_position:
+                try:
+                    self.endMarkPosition()
+                except Exception as ex:
+                    self.log(ex)
 
+            # Starting the current markItr cycle through the saved marks
+            # when in a Mark it is editable
             elif key == config.cycle_through_marks:
-                self.markItr = 0
-                self.current_mark = self.marks[self.markItr]
+                try:
+                    self.cycleThroughMarks()
+                except Exception as ex:
+                    self.log(ex)
+
+            # Stop cycling through marks
+            elif key == config.cycle_through_marks_stop:
+                try:
+                    self.current_mark = None
+                except Exception as ex:
+                    self.log(ex)
 
             # Quit the program
             elif key == config.quit_program:
                 self.poll_thread.join()
                 break
 
+            elif key == ord('w'):
+                self.log(self.current_mark)
+                self.log(self.markItr)
+
             # Do the actual edits taking the marks and applying them to
             # to the original file
             elif key == config.begin_edits:
-                self.poll_thread.join()
-                self.song.stop()
-
-                filename, file_extension = os.path.splitext(self.original_file)
-                self.temp_file = filename + "-old" + file_extension
-                os.rename(self.original_file, self.temp_file)
-                command = ['ffmpeg', "-loglevel",
-                           "error", '-i', self.temp_file]
-
-                select = """ffmpeg -i {} -vf "select='""".format(
-                    self.temp_file)
-                select = "select='"
-                aselect = "aselect='"
-                last = 0
-                for each in self.marks:
-                    temp = each.end
-                    each.end = each.start
-                    each.start = last
-                    last = temp
-                n = Mark()
-                n.start = last
-                self.log(str(int(self.duration / 1000)))
-                n.end = 1
-                self.marks.append(n)
-                for i, each in enumerate(self.marks):
-                    if i == 0:
-                        select += """between(t,{},{})""".format(
-                            int(self.mark_to_milliseconds(each.start) / 1000),
-                            int(self.mark_to_milliseconds(each.end) / 1000),
-                        )
-                        aselect += """between(t,{},{})""".format(
-                            int(self.mark_to_milliseconds(each.start) / 1000),
-                            int(self.mark_to_milliseconds(each.end) / 1000),
-                        )
-                    else:
-                        select += """+between(t,{},{})""".format(
-                            int(self.mark_to_milliseconds(each.start) / 1000),
-                            int(self.mark_to_milliseconds(each.end) / 1000),
-                        )
-                        aselect += """+between(t,{},{})""".format(
-                            int(self.mark_to_milliseconds(each.start) / 1000),
-                            int(self.mark_to_milliseconds(each.end) / 1000),
-                        )
-
-                select += """',setpts=N/FRAME_RATE/TB """
-                aselect += """',asetpts=N/SR/TB"""
-                command.append('-vf')
-                command.append(select)
-                command.append('-af')
-                command.append(aselect)
-                command.append(self.original_file)
-                self.command = command
-                self.log(command)
-                subprocess.call(command)
-                os.remove(self.temp_file)
+                self.applyEdits()
                 break
 
         self.window.clear()
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
+
+    def saveCurrentMark(self):
+        # check to make sure there is an active mark and that both the beginning and end have
+        # been entered
+        if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
+            self.current_mark.reset()
+            self.marks.append(self.current_mark)
+            self.current_mark = None
+            # TODO Not thinking I need to do this. investgate later
+            self.marks = sorted(self.marks, key=itemgetter('start'))
+        else:
+            sounds.error_sound()
+
+    def startMarkPosition(self):
+        # make sure there is and active mark
+        if self.current_mark:
+            begin_position_check = self.song.get_position()
+            okay = True
+            # cycle through the saved marks and make sure the current position does
+            # overlap with them
+            for each in self.marks:
+                if each != self.current_mark:
+                    if each.start <= begin_position_check <= each.end:
+                        okay = False
+            if okay:
+                self.current_mark.start = begin_position_check
+            else:
+                self.log('overlap')
+                sounds.error_sound()
+        else:
+            self.log('no current_mark')
+            sounds.error_sound()
+
+    def endMarkPosition(self):
+        # make sure there is an active mark
+        if self.current_mark:
+            begin_position_check = self.song.get_position()
+            okay = True
+            # cycle through the saved marks and make sure the current position does
+            # overlap with them
+            for each in self.marks:
+                if each != self.current_mark:
+                    if each.start <= begin_position_check <= each.end:
+                        okay = False
+            if okay:
+                self.current_mark.end = begin_position_check
+            else:
+                sounds.error_sound()
+        else:
+            sounds.error_sound()
+
+    def applyEdits(self):
+        self.poll_thread.join()
+        self.song.stop()
+
+        filename, file_extension = os.path.splitext(self.original_file)
+        self.temp_file = filename + "-old" + file_extension
+        os.rename(self.original_file, self.temp_file)
+        command = ['ffmpeg', "-loglevel",
+                   "error", '-i', self.temp_file]
+
+        select = """ffmpeg -i {} -vf "select='""".format(
+            self.temp_file)
+        select = "select='"
+        aselect = "aselect='"
+        last = 0
+        for each in self.marks:
+            temp = each.end
+            each.end = each.start
+            each.start = last
+            last = temp
+        n = Mark()
+        n.start = last
+        self.log(str(int(self.duration / 1000)))
+        n.end = 1
+        self.marks.append(n)
+        for i, each in enumerate(self.marks):
+            if i == 0:
+                select += """between(t,{},{})""".format(
+                    int(self.mark_to_milliseconds(each.start) / 1000),
+                    int(self.mark_to_milliseconds(each.end) / 1000),
+                )
+                aselect += """between(t,{},{})""".format(
+                    int(self.mark_to_milliseconds(each.start) / 1000),
+                    int(self.mark_to_milliseconds(each.end) / 1000),
+                )
+            else:
+                select += """+between(t,{},{})""".format(
+                    int(self.mark_to_milliseconds(each.start) / 1000),
+                    int(self.mark_to_milliseconds(each.end) / 1000),
+                )
+                aselect += """+between(t,{},{})""".format(
+                    int(self.mark_to_milliseconds(each.start) / 1000),
+                    int(self.mark_to_milliseconds(each.end) / 1000),
+                )
+
+        select += """',setpts=N/FRAME_RATE/TB """
+        aselect += """',asetpts=N/SR/TB"""
+        command.append('-vf')
+        command.append(select)
+        command.append('-af')
+        command.append(aselect)
+        command.append(self.original_file)
+        self.command = command
+        self.log(command)
+        subprocess.call(command)
+        os.remove(self.temp_file)
+        # break
+
+    def cycleThroughMarks(self):
+        self.current_mark = self.marks[self.markItr]
+        self.changePositionBySecondOffset(-2, self.current_mark.start)
+        if len(self.marks) > self.markItr+1:
+            self.markItr += 1
+        else:
+            self.markItr = 0
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
         cur_sec = round(cur_pos * self.duration) + (sec_offset * 1000)
@@ -275,7 +322,6 @@ class MyApp(object):
                 new_pos = 1
         self.song.set_position(new_pos)
         self.song.play()
-
 
 
 if __name__ == '__main__':

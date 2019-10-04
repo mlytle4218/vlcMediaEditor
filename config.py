@@ -7,11 +7,12 @@ jump_forward = curses.KEY_RIGHT
 play_pause = ord(' ')
 mark_create_new = ord('n')
 mark_save_current = ord('s')
-mark_record_start_posistion = ord('b')
-mark_record_end_posistion = ord('e')
+mark_record_start_position = ord('b')
+mark_record_end_position = ord('e')
 quit_program = ord('q')
 begin_edits = ord('o')
 cycle_through_marks = ord('c')
+cycle_through_marks_stop = ord('v')
 
 
 

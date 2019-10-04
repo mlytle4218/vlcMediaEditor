@@ -1,4 +1,9 @@
 class Mark():
+    """
+        A Class that holds the data for the positions of the edits. They represent
+        the beginning of audio that will be removed and the position where the audio
+        will begin again.
+    """
     def __init__(self):
         self.start = -1
         self.end = -1
