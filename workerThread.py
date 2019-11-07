@@ -49,20 +49,33 @@ class WorkerThread(threading.Thread):
 
                     self.song.window.clear()
                     #print out the current vlc decimal position
-                    self.song.window.addstr(cnt, 0, str(self.current))
+                    # self.song.window.addstr(cnt, 0, str(self.current))
 
                     # print out the current timeStamp of position
-                    cnt += 1
-                    time = self.timeStamp(self.song.duration, self.current)
-                    self.song.window.addstr(cnt, 0, str(time))
+                    # cnt += 1
+                    # time = self.timeStamp(self.song.duration, self.current)
+                    # self.song.window.addstr(cnt, 0, str(time))
+
+
+
+
+
 
                     #print out each of the marks start and stop
-                    cnt += 1
-                    for each in self.song.marks:
-                        self.song.window.addstr(cnt, 0, str(each.start))
-                        cnt += 1
-                        self.song.window.addstr(cnt, 0, str(each.end))
-                        cnt += 1
+                    # cnt += 1
+                    # for each in self.song.marks:
+                    #     self.song.window.addstr(cnt, 0, str(each.start))
+                    #     cnt += 1
+                    #     self.song.window.addstr(cnt, 0, str(each.end))
+                    #     cnt += 1
+
+
+
+
+
+
+
+
                     # update the difference - this is a 'magic' number to give leaway to testing to each
                     # mark relative to the current time. because there could be variation between the polled
                     # time from vlc and the current mark, it needs a cushion to test against. This needs to be converted
