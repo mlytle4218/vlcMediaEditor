@@ -39,7 +39,7 @@ class WorkerThread(threading.Thread):
             if abs(self.current - self.last) > 0:
                 # self.log('bob')
                 try:
-                    cnt = 0
+                    # cnt = 0
                     for each in self.song.marks:
                         if self.song.now_okay and each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
                             sounds.mark_start_sound()
