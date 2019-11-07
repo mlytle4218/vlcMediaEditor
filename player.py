@@ -16,23 +16,8 @@ from mark import Mark
 from workerThread import WorkerThread
 
 
-# def py_error_handler(filename, line, function, err, fmt):
-#     pass
-#     with open("test.txt", "a") as myfile:
-#         timestamp = datetime.datetime.fromtimestamp(
-#             time.time()).strftime('%Y-%m-%d %H:%M:%S')
-#         string = "{}:{}:{}:{}:{}:{}".format(
-#             timestamp, filename, line, function, err, fmt)
-#         myfile.write(string)
-
 
 class MyApp(object):
-    # ERROR_HANDLER_FUNC = CFUNCTYPE(
-    #     None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-
-    # c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
-    # asound = cdll.LoadLibrary('libasound.so')
-    # asound.snd_lib_error_set_handler(c_error_handler)
 
     def update_rate(self, amount):
         self.rate += amount
