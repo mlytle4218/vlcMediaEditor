@@ -78,14 +78,14 @@ class MyApp(object):
         self.panel.top()
         self.panel.show()
         self.window.clear()
-        n = Mark()
-        n.start = 0.015
-        n.end = 0.035
-        self.marks.append(n)
-        n = Mark()
-        n.start = 0.125
-        n.end = 0.268
-        self.marks.append(n)
+        # n = Mark()
+        # n.start = 0.015
+        # n.end = 0.035
+        # self.marks.append(n)
+        # n = Mark()
+        # n.start = 0.125
+        # n.end = 0.268
+        # self.marks.append(n)
 
         sys.argv.pop(0)
         if sys.argv:
