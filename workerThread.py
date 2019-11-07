@@ -28,6 +28,11 @@ class WorkerThread(threading.Thread):
             string = string + ' - ' + input + '\n'
             myfile.write(string)
 
+    def print_out_time(self):
+        self.song.window.clear()
+        time = self.timeStamp(self.song.duration, self.current)
+        self.song.window.addstr(0,0,time)
+
     def run(self):
         # As long as we weren't asked to stop, try to take new tasks from the
         # queue. The tasks are taken with a blocking 'get', so no CPU
@@ -47,7 +52,7 @@ class WorkerThread(threading.Thread):
                         if self.song.now_okay and each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
                             sounds.mark_end_sound()
 
-                    self.song.window.clear()
+                    # self.song.window.clear()
                     #print out the current vlc decimal position
                     # self.song.window.addstr(cnt, 0, str(self.current))
 
@@ -92,16 +97,16 @@ class WorkerThread(threading.Thread):
         out = duration * current
 
         millis = int(out)
-        seconds = (millis/1000) % 60
+        seconds = int((millis/1000) % 60)
         minutes = (millis/(1000*60)) % 60
         minutes = int(minutes)
         hours = (millis/(1000*60*60)) % 24
         time = ""
         if hours >= 1:
-            time = "{}:{:02d}:{:02d}".format(
+            time = "{} hours {} minutes {}  seconds".format(
                 hours, minutes, seconds)
         else:
-            time = "{}:{:02.3f}".format(minutes, seconds)
+            time = "{} minutes {} seconds".format(minutes, seconds)
         return time
 
     # used to shut down the worker thread

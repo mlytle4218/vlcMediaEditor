@@ -195,6 +195,9 @@ class MyApp(object):
             elif key == config.normal_speed:
                 self.normalize_rate()
 
+            elif key == config.current_time:
+                self.poll_thread.print_out_time()
+
         self.window.clear()
         self.panel.hide()
         panel.update_panels()
