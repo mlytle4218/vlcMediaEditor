@@ -118,8 +118,18 @@ class MyApp(object):
 
             # Jumps back 5 seconds
             elif key == config.jump_back:
-                self.changePositionBySecondOffset(
-                    -config.jump_time, self.song.get_position())
+                if (self.song.get_state() != 6):
+                    self.changePositionBySecondOffset(
+                        -config.jump_time, self.song.get_position())
+                else:
+                    self.song = self.instance.media_player_new()
+                    self.media = self.instance.media_new(self.original_file)
+                    self.song.set_media(self.media)
+                    self.song.play()
+                    self.media.parse()
+                    self.changePositionBySecondOffset(
+                        -config.jump_time, 1)
+
 
             # Jump ahead five seconds
             elif key == config.jump_forward:
@@ -185,8 +195,10 @@ class MyApp(object):
                 break
 
             elif key == ord('w'):
-                self.log(self.current_mark)
-                self.log(self.markItr)
+                # self.log(self.current_mark)
+                # self.log(self.markItr)
+                self.log(self.position)
+                self.log(self.song.get_position())
 
             # Do the actual edits taking the marks and applying them to
             # to the original file

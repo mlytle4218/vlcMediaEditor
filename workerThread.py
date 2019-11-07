@@ -37,6 +37,7 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
+                # self.log('bob')
                 try:
                     cnt = 0
                     for each in self.song.marks:
