@@ -270,7 +270,7 @@ class MyApp(object):
             last = temp
         n = Mark()
         n.start = last
-        self.log(str(int(self.duration / 1000)))
+        # self.log(str(int(self.duration / 1000)))
         n.end = 1
         self.marks.append(n)
         for i, each in enumerate(self.marks):
