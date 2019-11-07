@@ -1,99 +1,74 @@
 #!/usr/bin/env python3
 
-# import sys
-# import wave
-# import math
-# import struct
-# import random
-# import argparse
-# from itertools import *
-
-
-# def sine_wave(frequency=440.0, framerate=44100, amplitude=0.5):
-#     period = int(framerate / frequency)
-#     if amplitude > 1.0: amplitude = 1.0
-#     if amplitude < 0.0: amplitude = 0.0
-#     lookup_table = [float(amplitude) * math.sin(2.0*math.pi*float(frequency)*(float(i%period)/float(framerate))) for i in range(period)]
-#     return (lookup_table[i%period] for i in count(0))
-
-
-# result = sine_wave()
-import pyaudio
-import struct
 import math
-
-FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
-
-# p = pyaudio.PyAudio()
+import numpy as np
+import pyaudio
+import ctypes
 
 
-def data_for_freq(frequency: float, time: float = None):
-    """get frames for a fixed frequency for a specified time or
-    number of frames, if frame_count is specified, the specified
-    time is ignored"""
-    frame_count = int(RATE * time)
-
-    remainder_frames = frame_count % RATE
-    wavedata = []
-
-    for i in range(frame_count):
-        a = RATE / frequency  # number of frames per wave
-        b = i / a
-        # explanation for b
-        # considering one wave, what part of the wave should this be
-        # if we graph the sine wave in a
-        # displacement vs i graph for the particle
-        # where 0 is the beginning of the sine wave and
-        # 1 the end of the sine wave
-        # which part is "i" is denoted by b
-        # for clarity you might use
-        # though this is redundant since math.sin is a looping function
-        # b = b - int(b)
-
-        c = b * (2*math.pi)
-        # explanation for c
-        # now we map b to between 0 and 2*math.PI
-        # since 0 - 2*PI, 2*PI - 4*PI, ...
-        # are the repeating domains of the sin wave (so the decimal values will
-        # also be mapped accordingly,
-        # and the integral values will be multiplied
-        # by 2*PI and since sin(n*2*PI) is zero where n is an integer)
-        d = math.sin(c) * 32767
-        e = int(d)
-        wavedata.append(e)
-
-    for i in range(remainder_frames):
-        wavedata.append(0)
-
-    number_of_bytes = str(len(wavedata))  
-    wavedata = struct.pack(number_of_bytes + 'h', *wavedata)
-
-    return wavedata
+# this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
+ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(
+    None, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p)
+# this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
 
 
-def play(frequency: float, time: float):
-    """
-    play a frequency for a fixed time!
-    """
-    frames = data_for_freq(frequency, time)
-    frames2 = data_for_freq(frequency*10, time)
+class Note:
 
-    stream = pyaudio.PyAudio().open(format=FORMAT, channels=CHANNELS, rate=RATE, output=True)
-    stream.write(frames)
-    stream.write(frames2)
-    total_frames = []
-    for itr,each in enumerate(frames):
-        total_frames.append(frames[itr] - frames2[itr])
+    def __init__(self, frequency, duration):
+        self.frequency = frequency
+        self.duration = duration
 
-    number_of_bytes = str(len(total_frames))
-    total_frames = struct.pack(number_of_bytes+'h', *total_frames)
-    stream.write(total_frames)
-    stream.stop_stream()
-    stream.close()
+
+class Generator:
+
+    def __init__(self, sample_rate=44100):
+        self.sample_rate = sample_rate
+
+    # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
+    # def py_error_handler(self, filename, line, function, err, fmt):
+    def py_error_handler(self, filename, line, function, err, fmt):
+        pass
+
+    def generate_tone(self, notes, volume=1.0):
+        result = []
+        for note in notes:
+            samples = self.tone(note.frequency, note.duration)
+            result.extend(samples)
+        result = np.asarray(result) * volume
+        self.play( np.array(result).tobytes())
+        # return np.array(result).tobytes()
+
+    def play(self, tones):
+        # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
+        c_error_handler = ERROR_HANDLER_FUNC(self.py_error_handler)
+        asound = ctypes.cdll.LoadLibrary('libasound.so')
+        asound.snd_lib_error_set_handler(c_error_handler)
+        # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=1,
+                        rate=self.sample_rate,
+                        output=True)
+        stream.write(tones)
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+    def tone(self, frequency, duration):
+        return (
+            np.sin(
+                2*np.pi*np.arange(
+                    self.sample_rate*duration
+                )*frequency/self.sample_rate
+            )
+        ).astype(np.float32)
 
 
 if __name__ == "__main__":
-    play(200, .7)
-    # play(440, .7)
+    generater = Generator()
+
+    notes = []
+    notes.append(Note(440, 0.25))
+    notes.append(Note(540, 0.25))
+
+    generater.generate_tone(notes, 1.0)
