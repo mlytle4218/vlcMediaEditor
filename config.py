@@ -13,6 +13,7 @@ quit_program = ord('q')
 begin_edits = ord('o')
 cycle_through_marks = ord('c')
 cycle_through_marks_stop = ord('v')
+normal_speed = ord('z')
 
 
 

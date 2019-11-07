@@ -38,6 +38,10 @@ class MyApp(object):
         self.rate += amount
         self.song.set_rate(self.rate)
 
+    def normalize_rate(self):
+        self.rate = 1
+        self.song.set_rate(self.rate)
+
     def log(self, input):
         input = str(input)
         with open("test.txt", "a") as myfile:
@@ -63,7 +67,7 @@ class MyApp(object):
 
         curses.curs_set(0)
 
-        self.height, self.width = stdscreen.getmaxyx()
+        # self.height, self.width = stdscreen.getmaxyx()
         self.window = stdscreen.subwin(0, 0)
         self.window.keypad(1)
         self.panel = panel.new_panel(self.window)
@@ -190,6 +194,10 @@ class MyApp(object):
                 self.applyEdits()
                 break
 
+            # Go back to normal speed
+            elif key == config.normal_speed:
+                self.normalize_rate()
+
         self.window.clear()
         self.panel.hide()
         panel.update_panels()
@@ -208,7 +216,6 @@ class MyApp(object):
             sounds.error_sound()
 
     def startMarkPosition(self):
-        # make sure there is and active mark
         if self.current_mark:
             begin_position_check = self.song.get_position()
             okay = True
@@ -228,7 +235,6 @@ class MyApp(object):
             sounds.error_sound()
 
     def endMarkPosition(self):
-        # make sure there is an active mark
         if self.current_mark:
             begin_position_check = self.song.get_position()
             okay = True
@@ -301,7 +307,6 @@ class MyApp(object):
         self.log(command)
         subprocess.call(command)
         os.remove(self.temp_file)
-        # break
 
     def cycleThroughMarks(self):
         self.current_mark = self.marks[self.markItr]
