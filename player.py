@@ -72,19 +72,17 @@ class MyApp(object):
         # n.end = 0.268
         # self.marks.append(n)
 
-        sys.argv.pop(0)
-        if sys.argv:
-            self.original_file = sys.argv[0]
-            self.instance = vlc.Instance(('--no-video'))
-            self.song = self.instance.media_player_new()
-            self.media = self.instance.media_new(self.original_file)
-            self.song.set_media(self.media)
-            self.song.play()
-            self.media.parse()
-            self.poll_thread = WorkerThread(self)
-            self.poll_thread.start()
+        self.original_file = sys.argv[1]
+        self.instance = vlc.Instance(('--no-video'))
+        self.song = self.instance.media_player_new()
+        self.media = self.instance.media_new(self.original_file)
+        self.song.set_media(self.media)
+        self.song.play()
+        self.media.parse()
+        self.poll_thread = WorkerThread(self)
+        self.poll_thread.start()
 
-            self.duration = self.media.get_duration()
+        self.duration = self.media.get_duration()
         try:
             while True:
                 self.position = self.song.get_position()
@@ -216,7 +214,6 @@ class MyApp(object):
         self.window.refresh()
         input = self.window.getstr(1, 0, input_length)
         self.window.clear()
-        # curses.noecho()
         return input
 
     def jumpSpecificTime(self):
@@ -413,4 +410,7 @@ class MyApp(object):
 
 
 if __name__ == '__main__':
-    curses.wrapper(MyApp)
+    if len(sys.argv) == 2:
+        curses.wrapper(MyApp)
+    else:
+        print("requires a file to edit")
