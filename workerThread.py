@@ -100,13 +100,18 @@ class WorkerThread(threading.Thread):
         seconds = int((millis/1000) % 60)
         minutes = (millis/(1000*60)) % 60
         minutes = int(minutes)
-        hours = (millis/(1000*60*60)) % 24
+        hours = int((millis/(1000*60*60)) % 24)
         time = ""
+        # if hours >= 1:
+        #     time = "{} hours {} minutes {}  seconds".format(hours, minutes, seconds)
+        # else:
+        #     time = "{} minutes {} seconds".format(minutes, seconds)
         if hours >= 1:
-            time = "{} hours {} minutes {}  seconds".format(
-                hours, minutes, seconds)
-        else:
-            time = "{} minutes {} seconds".format(minutes, seconds)
+            time = "{} hours ".format(hours)
+        if minutes >= 1:
+            time += "{} minutes ".format(minutes)
+        if seconds >= 1:
+            time  += "{} seconds".format(seconds)
         return time
 
     # used to shut down the worker thread

@@ -221,6 +221,7 @@ class MyApp(object):
 
     def jumpSpecificTime(self):
         self.song.pause()
+        self.window.clear()
         forward_input = self.getInput('forward? ',1)
         reverse = False
         if forward_input.decode() == "-":
@@ -396,9 +397,17 @@ class MyApp(object):
         if sec_offset < 0:
             if new_pos < 0:
                 new_pos = 0
+                # print out remaining time instead of jumping to end
+                left = self.poll_thread.timeStamp(self.duration, self.song.get_position())
+                self.window.addstr(0,0,"the most you can jump backwards is " + left)
+                return None
         else:
             if new_pos > 1:
                 new_pos = 1
+                # print out remaining time instead of jumping to end
+                left = self.poll_thread.timeStamp(self.duration, 1 - self.song.get_position())
+                self.window.addstr(0,0,"the most you can jump forward is " + left)
+                return None
         self.song.set_position(new_pos)
         self.song.play()
 
