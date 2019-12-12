@@ -1,2 +1,0 @@
-2019-12-11 17:00:23 - error minutes
-2019-12-11 17:00:23 - invalid literal for int() with base 10: 'q'
