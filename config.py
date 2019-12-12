@@ -15,6 +15,7 @@ cycle_through_marks = ord('c')
 cycle_through_marks_stop = ord('v')
 normal_speed = ord('z')
 current_time = ord('t')
+jump_specific = ord('j')
 
 
 

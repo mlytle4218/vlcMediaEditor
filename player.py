@@ -85,123 +85,197 @@ class MyApp(object):
             self.poll_thread.start()
 
             self.duration = self.media.get_duration()
+        try:
+            while True:
+                self.position = self.song.get_position()
+                self.window.refresh()
+                curses.doupdate()
 
-        while True:
-            self.position = self.song.get_position()
-            self.window.refresh()
-            curses.doupdate()
+                key = self.window.getch()
 
-            key = self.window.getch()
+                # Speeds up the playback
+                if key == config.play_speed_up:
+                    self.update_rate(config.play_speed_rate)
 
-            # Speeds up the playback
-            if key == config.play_speed_up:
-                self.update_rate(config.play_speed_rate)
+                # Slows down the playback
+                elif key == config.play_speed_down:
+                    self.update_rate(-config.play_speed_rate)
 
-            # Slows down the playback
-            elif key == config.play_speed_down:
-                self.update_rate(-config.play_speed_rate)
-
-            # Jumps back 5 seconds
-            elif key == config.jump_back:
-                if (self.song.get_state() != 6):
-                    self.changePositionBySecondOffset(
-                        -config.jump_time, self.song.get_position())
-                else:
-                    self.song = self.instance.media_player_new()
-                    self.media = self.instance.media_new(self.original_file)
-                    self.song.set_media(self.media)
-                    self.song.play()
-                    self.media.parse()
-                    self.changePositionBySecondOffset(
-                        -config.jump_time, 1)
-
-
-            # Jump ahead five seconds
-            elif key == config.jump_forward:
-                self.changePositionBySecondOffset(
-                    config.jump_time, self.song.get_position())
-
-            # pauses and plays the media
-            elif key == config.play_pause:
-                if self.song.is_playing:
-                    self.song.pause()
-                else:
-                    self.song.play()
-
-            # Create a new mark
-            elif key == config.mark_create_new:
-                try:
-                    if self.current_mark:
-                        sounds.error_sound()
+                # Jumps back 5 seconds
+                elif key == config.jump_back:
+                    if (self.song.get_state() != 6):
+                        self.changePositionBySecondOffset(
+                            -config.jump_time,
+                            self.song.get_position()
+                            )
                     else:
-                        self.current_mark = Mark()
-                except Exception as ex:
-                    self.log(ex)
+                        self.song = self.instance.media_player_new()
+                        self.media = self.instance.media_new(self.original_file)
+                        self.song.set_media(self.media)
+                        self.song.play()
+                        self.media.parse()
+                        self.changePositionBySecondOffset(
+                            -config.jump_time, 1)
 
-            # Saves a current mark
-            elif key == config.mark_save_current:
-                try:
-                    self.saveCurrentMark()
-                except Exception as ex:
-                    self.log(ex)
 
-            # Record the beginning of the mark
-            elif key == config.mark_record_start_position:
-                try:
-                    self.startMarkPosition()
-                except Exception as ex:
-                    self.log(ex)
+                # Jump ahead five seconds
+                elif key == config.jump_forward:
+                    self.changePositionBySecondOffset(
+                        config.jump_time, self.song.get_position())
 
-            # Record the end of the mark
-            elif key == config.mark_record_end_position:
-                try:
-                    self.endMarkPosition()
-                except Exception as ex:
-                    self.log(ex)
+                # pauses and plays the media
+                elif key == config.play_pause:
+                    if self.song.is_playing:
+                        self.song.pause()
+                    else:
+                        self.song.play()
 
-            # Starting the current markItr cycle through the saved marks
-            # when in a Mark it is editable
-            elif key == config.cycle_through_marks:
-                try:
-                    self.cycleThroughMarks()
-                except Exception as ex:
-                    self.log(ex)
+                # Create a new mark
+                elif key == config.mark_create_new:
+                    try:
+                        if self.current_mark:
+                            sounds.error_sound()
+                        else:
+                            self.current_mark = Mark()
+                    except Exception as ex:
+                        self.log(ex)
 
-            # Stop cycling through marks
-            elif key == config.cycle_through_marks_stop:
-                try:
-                    self.current_mark = None
-                except Exception as ex:
-                    self.log(ex)
+                # Saves a current mark
+                elif key == config.mark_save_current:
+                    try:
+                        self.saveCurrentMark()
+                    except Exception as ex:
+                        self.log(ex)
 
-            # Quit the program
-            elif key == config.quit_program:
-                self.poll_thread.join()
-                break
+                # Record the beginning of the mark
+                elif key == config.mark_record_start_position:
+                    try:
+                        self.startMarkPosition()
+                    except Exception as ex:
+                        self.log(ex)
 
-            elif key == ord('w'):
-                # self.log(self.current_mark)
-                # self.log(self.markItr)
-                self.log(self.position)
-                self.log(self.song.get_position())
+                # Record the end of the mark
+                elif key == config.mark_record_end_position:
+                    try:
+                        self.endMarkPosition()
+                    except Exception as ex:
+                        self.log(ex)
 
-            # Do the actual edits taking the marks and applying them to
-            # to the original file
-            elif key == config.begin_edits:
-                self.applyEdits()
-                break
+                # Starting the current markItr cycle through the saved marks
+                # when in a Mark it is editable
+                elif key == config.cycle_through_marks:
+                    try:
+                        self.cycleThroughMarks()
+                    except Exception as ex:
+                        self.log(ex)
 
-            # Go back to normal speed
-            elif key == config.normal_speed:
-                self.normalize_rate()
+                # Stop cycling through marks
+                elif key == config.cycle_through_marks_stop:
+                    try:
+                        self.current_mark = None
+                    except Exception as ex:
+                        self.log(ex)
 
-            elif key == config.current_time:
-                self.poll_thread.print_out_time()
+                # Quit the program
+                elif key == config.quit_program:
+                    self.poll_thread.join()
+                    break
+
+                elif key == ord('w'):
+                    # self.log(self.current_mark)
+                    # self.log(self.markItr)
+                    self.log(self.position)
+                    self.log(self.song.get_position())
+
+                # Do the actual edits taking the marks and applying them to
+                # to the original file
+                elif key == config.begin_edits:
+                    self.applyEdits()
+                    break
+
+                # Go back to normal speed
+                elif key == config.normal_speed:
+                    self.normalize_rate()
+
+                elif key == config.current_time:
+                    self.poll_thread.print_out_time()
+
+                elif key == config.jump_specific:
+                    self.jumpSpecificTime()
+        except KeyboardInterrupt:
+            pass
 
         self.window.clear()
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
+
+    def getInput(self, prompt, input_length):
+        curses.echo()
+        self.window.addstr(0,0,prompt)
+        self.window.refresh()
+        input = self.window.getstr(1, 0, input_length)
+        self.window.clear()
+        # curses.noecho()
+        return input
+
+    def jumpSpecificTime(self):
+        self.song.pause()
+        forward_input = self.getInput('forward? ',1)
+        reverse = False
+        if forward_input.decode() == "-":
+            reverse = True
+        hours = 0
+        while True:
+            hours_input = self.getInput('hours? ',2)
+            if hours_input.decode() == '':
+                break
+            try:
+                hours_input = int(hours_input.decode())
+                if (hours_input >= hours):
+                    hours = hours_input
+                    break
+            except ValueError as e:
+                self.log('error hours')
+                self.log(e)
+        minutes = 0
+        while True:
+            minutes_input = self.getInput('minutes? ', 2)
+            if minutes_input.decode() == '':
+                break
+            try:
+                minutes_input = int(minutes_input.decode())
+                if (minutes_input >= minutes):
+                    minutes = minutes_input
+                    break
+            except ValueError as e:
+                self.log('error minutes')
+                self.log(e)
+        seconds = 0
+        while True:
+            seconds_input = self.getInput('seconds? ', 2)
+            if seconds_input.decode() == '':
+                break
+            try:
+                seconds_input = int(seconds_input.decode())
+                if (seconds_input >= seconds):
+                    seconds = seconds_input
+                    break
+            except ValueError as e:
+                self.log('error seconds')
+                self.log(e)
+        seconds = seconds + minutes * 60 + hours * 60 *60
+        if reverse:
+            seconds *= -1
+
+        self.changePositionBySecondOffset(
+            seconds,
+            self.song.get_position()
+            )
+        self.song.play()
+        
+        
+
 
     def saveCurrentMark(self):
         # check to make sure there is an active mark and that both the beginning and end have
