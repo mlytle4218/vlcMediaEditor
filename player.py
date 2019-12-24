@@ -141,7 +141,7 @@ class MyApp(object):
                 elif key == config.mark_create_new:
                     try:
                         if self.current_mark:
-                            sounds.error_sound()
+                            sounds.error_sound(self.volume)
                         else:
                             self.current_mark = Mark()
                     except Exception as ex:
@@ -297,7 +297,7 @@ class MyApp(object):
             # TODO Not thinking I need to do this. investgate later
             self.marks = sorted(self.marks, key=itemgetter('start'))
         else:
-            sounds.error_sound()
+            sounds.error_sound(self.volume)
 
     def startMarkPosition(self):
         if self.current_mark:
@@ -311,12 +311,13 @@ class MyApp(object):
                         okay = False
             if okay:
                 self.current_mark.start = begin_position_check
+                sounds.mark_start_sound(self.volume)
             else:
                 self.log('overlap')
-                sounds.error_sound()
+                sounds.error_sound(self.volume)
         else:
             self.log('no current_mark')
-            sounds.error_sound(_volume=self.volume)
+            sounds.error_sound(self.volume)
 
     def endMarkPosition(self):
         if self.current_mark:
@@ -330,10 +331,11 @@ class MyApp(object):
                         okay = False
             if okay:
                 self.current_mark.end = begin_position_check
+                sounds.mark_end_sound(self.volume)
             else:
-                sounds.error_sound()
+                sounds.error_sound(self.volume)
         else:
-            sounds.error_sound()
+            sounds.error_sound(self.volume)
 
     def applyEdits(self):
         self.poll_thread.join()

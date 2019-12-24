@@ -18,7 +18,7 @@ def error_sound(_volume=1):
     gt.generate_tone(notes, volume=_volume)
 
 
-def mark_start_sound():
+def mark_start_sound(_volume=1):
     notes = []
     frequency = 400.0
     time = 0.3
@@ -32,11 +32,11 @@ def mark_start_sound():
             time/number
         ))
 
-    gt.generate_tone(notes)
+    gt.generate_tone(notes, volume=_volume)
 
 
 
-def mark_end_sound():
+def mark_end_sound(_volume=1):
     notes= []
     frequency = 400.0
     time = 0.3
@@ -49,5 +49,5 @@ def mark_end_sound():
             frequency*( 1 - (itr/10) ),
             time/number
         ))
-    gt.generate_tone(notes)
+    gt.generate_tone(notes, volume=_volume)
 
