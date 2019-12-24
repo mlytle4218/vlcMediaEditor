@@ -22,16 +22,20 @@ class WorkerThread(threading.Thread):
 
     def log(self, input):
         input = str(input)
-        with open("test.txt", "a") as myfile:
+        with open("log.txt", "a") as myfile:
             string = datetime.datetime.fromtimestamp(
                 time.time()).strftime('%Y-%m-%d %H:%M:%S')
             string = string + ' - ' + input + '\n'
             myfile.write(string)
 
     def print_out_time(self):
-        self.song.window.clear()
         time = self.timeStamp(self.song.duration, self.current)
-        self.song.window.addstr(0,0,time)
+        self.print_to_screen(time)
+
+    def print_to_screen(self, output):
+        self.song.window.clear()
+        self.song.window.addstr(0,0,output)
+
 
     def run(self):
         # As long as we weren't asked to stop, try to take new tasks from the

@@ -29,7 +29,7 @@ class MyApp(object):
 
     def log(self, input):
         input = str(input)
-        with open("test.txt", "a") as myfile:
+        with open("log.txt", "a") as myfile:
             string = datetime.datetime.fromtimestamp(
                 time.time()).strftime('%Y-%m-%d %H:%M:%S')
             string = string + ' - ' + input + '\n'
@@ -144,6 +144,7 @@ class MyApp(object):
                             sounds.error_sound(self.volume)
                         else:
                             self.current_mark = Mark()
+                            self.poll_thread.print_to_screen('new')
                     except Exception as ex:
                         self.log(ex)
 
@@ -296,6 +297,7 @@ class MyApp(object):
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
             self.marks = sorted(self.marks, key=itemgetter('start'))
+            self.poll_thread.print_to_screen('saved')
         else:
             sounds.error_sound(self.volume)
 
@@ -312,6 +314,7 @@ class MyApp(object):
             if okay:
                 self.current_mark.start = begin_position_check
                 sounds.mark_start_sound(self.volume)
+                self.poll_thread.print_to_screen('begining')
             else:
                 self.log('overlap')
                 sounds.error_sound(self.volume)
@@ -332,6 +335,7 @@ class MyApp(object):
             if okay:
                 self.current_mark.end = begin_position_check
                 sounds.mark_end_sound(self.volume)
+                self.poll_thread.print_to_screen('end')
             else:
                 sounds.error_sound(self.volume)
         else:
@@ -390,7 +394,7 @@ class MyApp(object):
         command.append(aselect)
         command.append(self.original_file)
         self.command = command
-        self.log(command)
+        # self.log(command)
         subprocess.call(command)
         os.remove(self.temp_file)
 
