@@ -46,10 +46,12 @@ class WorkerThread(threading.Thread):
                 try:
                     # cnt = 0
                     for each in self.song.marks:
-                        if self.song.now_okay and each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
+                        if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
+                        # if self.song.now_okay and each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
                             sounds.mark_start_sound(self.song.volume)
 
-                        if self.song.now_okay and each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
+                        if each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
+                        # if self.song.now_okay and each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
                             sounds.mark_end_sound(self.song.volume)
 
                     # self.song.window.clear()
