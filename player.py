@@ -46,7 +46,7 @@ class MyApp(object):
         self.marks = []
         self.markItr = 0
         self.current_mark = None
-        self.now_okay = True
+        # self.now_okay = True
         self.volume = config.volume
 
         self.screen = stdscreen
