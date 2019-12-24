@@ -342,6 +342,7 @@ class MyApp(object):
             sounds.error_sound(self.volume)
 
     def applyEdits(self):
+        self.poll_thread.print_to_screen('final')
         self.poll_thread.join()
         self.song.stop()
 
