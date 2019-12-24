@@ -1,8 +1,9 @@
 import generate_tone
+import config
 
 gt = generate_tone.Generator()
 
-def error_sound():
+def error_sound(_volume=1):
     notes=[]
     frequency = 400.0
     time = 0.3
@@ -14,7 +15,7 @@ def error_sound():
         time
     ))
 
-    gt.generate_tone(notes)
+    gt.generate_tone(notes, volume=_volume)
 
 
 def mark_start_sound():

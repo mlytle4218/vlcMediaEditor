@@ -47,6 +47,7 @@ class MyApp(object):
         self.markItr = 0
         self.current_mark = None
         self.now_okay = True
+        self.volume = config.volume
 
         self.screen = stdscreen
 
@@ -90,6 +91,14 @@ class MyApp(object):
                 curses.doupdate()
 
                 key = self.window.getch()
+
+                # Raises the volume
+                if key == config.volume_up:
+                    self.changeVolume(config.volume_increments)
+                # Lowers the volume
+                if key == config.volume_down:
+                    if self.volume > 0:
+                        self.changeVolume(-config.volume_increments)
 
                 # Speeds up the playback
                 if key == config.play_speed_up:
@@ -216,6 +225,9 @@ class MyApp(object):
         self.window.clear()
         return input
 
+    def changeVolume(self, value):
+        self.volume += value
+
     def jumpSpecificTime(self):
         self.song.pause()
         self.window.clear()
@@ -304,7 +316,7 @@ class MyApp(object):
                 sounds.error_sound()
         else:
             self.log('no current_mark')
-            sounds.error_sound()
+            sounds.error_sound(_volume=self.volume)
 
     def endMarkPosition(self):
         if self.current_mark:

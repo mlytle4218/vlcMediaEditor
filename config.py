@@ -16,8 +16,14 @@ cycle_through_marks_stop = ord('v')
 normal_speed = ord('z')
 current_time = ord('t')
 jump_specific = ord('j')
+volume_up = ord('u')
+volume_down = ord('d')
 
 
 
 jump_time = 5
 play_speed_rate = 0.25
+
+
+volume = 1
+volume_increments = 0.5
