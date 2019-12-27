@@ -48,6 +48,7 @@ class MyApp(object):
         self.current_mark = None
         # self.now_okay = True
         self.volume = config.volume
+        self.applyEditsBoolean = False
 
         self.screen = stdscreen
 
@@ -198,7 +199,9 @@ class MyApp(object):
                 # Do the actual edits taking the marks and applying them to
                 # to the original file
                 elif key == config.begin_edits:
-                    self.applyEdits()
+                    global final_command
+                    global temp_file
+                    final_command, temp_file = self.applyEdits()
                     break
 
                 # Go back to normal speed
@@ -285,9 +288,6 @@ class MyApp(object):
             )
         self.song.play()
         
-        
-
-
     def saveCurrentMark(self):
         # check to make sure there is an active mark and that both the beginning and end have
         # been entered
@@ -342,18 +342,18 @@ class MyApp(object):
             sounds.error_sound(self.volume)
 
     def applyEdits(self):
-        self.poll_thread.print_to_screen('final')
-        self.poll_thread.join()
+        # self.poll_thread.print_to_screen('final')
+        # self.poll_thread.join()
         self.song.stop()
 
         filename, file_extension = os.path.splitext(self.original_file)
-        self.temp_file = filename + "-old" + file_extension
-        os.rename(self.original_file, self.temp_file)
-        command = ['ffmpeg', "-loglevel",
-                   "error", '-i', self.temp_file]
+        temp_file = filename + "-old" + file_extension
+        os.rename(self.original_file, temp_file)
+        # command = ['ffmpeg', '-i', temp_file]
+        command = ['ffmpeg', '-i', temp_file]
+        # command = ['ffmpeg', "-loglevel", "error", '-i', temp_file]
 
-        select = """ffmpeg -i {} -vf "select='""".format(
-            self.temp_file)
+        select = """ffmpeg -i {} -vf "select='""".format(temp_file)
         select = "select='"
         aselect = "aselect='"
         last = 0
@@ -394,10 +394,11 @@ class MyApp(object):
         command.append('-af')
         command.append(aselect)
         command.append(self.original_file)
-        self.command = command
-        # self.log(command)
-        subprocess.call(command)
-        os.remove(self.temp_file)
+        return command,temp_file
+        # global final_command
+        # final_command = command
+        # subprocess.call(command)
+        # os.remove(temp_file)
 
     def cycleThroughMarks(self):
         self.current_mark = self.marks[self.markItr]
@@ -430,6 +431,19 @@ class MyApp(object):
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
+        final_command = None
+        temp_file = None
         curses.wrapper(MyApp)
+        if final_command:
+            process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    print(output.strip())
+            rc = process.poll()
+            # subprocess.call(final_command)
+            os.remove(temp_file)
     else:
         print("requires a file to edit")
