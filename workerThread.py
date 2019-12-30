@@ -30,11 +30,12 @@ class WorkerThread(threading.Thread):
 
     def print_out_time(self):
         time = self.timeStamp(self.song.duration, self.current)
-        self.print_to_screen(time)
+        # self.print_to_screen(time)
+        return time
 
-    def print_to_screen(self, output):
-        self.song.window.clear()
-        self.song.window.addstr(0,0,output)
+    # def print_to_screen(self, output):
+    #     self.song.window.clear()
+    #     self.song.window.addstr(0,0,output)
 
 
     def run(self):

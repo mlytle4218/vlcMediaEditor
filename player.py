@@ -87,7 +87,7 @@ class MyApp(object):
         self.duration = self.media.get_duration()
         if self.duration <= 0:
             self.duration = self.ffprobe_get_length(self.original_file)
-            
+
         try:
             while True:
                 self.position = self.song.get_position()
@@ -205,7 +205,8 @@ class MyApp(object):
                     self.normalize_rate()
 
                 elif key == config.current_time:
-                    self.poll_thread.print_out_time()
+                    c_time = self.poll_thread.print_out_time()
+                    self.print_to_screen(c_time)
 
                 elif key == config.jump_specific:
                     self.jumpSpecificTime()
@@ -217,12 +218,16 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
+    def print_to_screen(self, output):
+        self.window.clear()
+        self.window.addstr(0,0,output)
+
+
     def ffprobe_get_length(self, input_file):
         #ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
         command = ['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1', input_file]
         result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         return float(result.stdout)
-
 
     def getInput(self, prompt, input_length):
         curses.echo()
@@ -302,7 +307,7 @@ class MyApp(object):
                 count = len(self.marks)
                 self.current_mark = Mark()
                 self.marks.append(self.current_mark)
-                self.poll_thread.print_to_screen('block {}'.format(count+1))
+                self.print_to_screen('block {}'.format(count+1))
         except Exception as ex:
             self.log(ex)
 
@@ -318,7 +323,7 @@ class MyApp(object):
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
             self.marks = sorted(self.marks, key=itemgetter('start'))
-            self.poll_thread.print_to_screen('saved')
+            self.print_to_screen('saved')
         else:
             sounds.error_sound(self.volume)
 
@@ -335,7 +340,7 @@ class MyApp(object):
             if okay:
                 self.current_mark.start = begin_position_check
                 sounds.mark_start_sound(self.volume)
-                self.poll_thread.print_to_screen('begining')
+                self.print_to_screen('begining')
             else:
                 self.log('overlap')
                 sounds.error_sound(self.volume)
@@ -356,14 +361,14 @@ class MyApp(object):
             if okay:
                 self.current_mark.end = begin_position_check
                 sounds.mark_end_sound(self.volume)
-                self.poll_thread.print_to_screen('end')
+                self.print_to_screen('end')
             else:
                 sounds.error_sound(self.volume)
         else:
             sounds.error_sound(self.volume)
 
     def applyEdits(self):
-        # self.poll_thread.print_to_screen('final')
+        # self.print_to_screen('final')
         # self.poll_thread.join()
         self.song.stop()
 
@@ -422,9 +427,10 @@ class MyApp(object):
         # os.remove(temp_file)
 
     def cycleThroughMarks(self):
-        self.poll_thread.print_to_screen('Block {}'.format(self.markItr + 1))
         self.current_mark = self.marks[self.markItr]
         self.changePositionBySecondOffset(-2, self.current_mark.start)
+        self.log('Block {}'.format(self.markItr + 1))
+        self.print_to_screen('Block {}'.format(self.markItr + 1))
         if len(self.marks) > self.markItr+1:
             self.markItr += 1
         else:
@@ -439,16 +445,16 @@ class MyApp(object):
                 # print out remaining time instead of jumping to end
                 left = self.poll_thread.timeStamp(self.duration, self.song.get_position())
                 # self.window.addstr(0,0,"the most you can jump backwards is " + left)
-                self.poll_thread.print_to_screen('the most you can jump backwoards is {}'.format(left))
-                return None
+                self.print_to_screen('the most you can jump backwoards is {}'.format(left))
+                # return None
         else:
             if new_pos > 1:
                 new_pos = 1
                 # print out remaining time instead of jumping to end
                 left = self.poll_thread.timeStamp(self.duration, 1 - self.song.get_position())
-                self.poll_thread.print_to_screen('the most you can jump forwards is {}'.format(left))
+                self.print_to_screen('the most you can jump forwards is {}'.format(left))
                 # self.window.addstr(0,0,"the most you can jump forward is " + left)
-                return None
+                # return None
         self.song.set_position(new_pos)
         self.song.play()
 
