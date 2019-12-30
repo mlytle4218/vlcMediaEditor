@@ -140,14 +140,7 @@ class MyApp(object):
 
                 # Create a new mark
                 elif key == config.mark_create_new:
-                    try:
-                        if self.current_mark:
-                            sounds.error_sound(self.volume)
-                        else:
-                            self.current_mark = Mark()
-                            self.poll_thread.print_to_screen('new')
-                    except Exception as ex:
-                        self.log(ex)
+                    self.createNewMark()
 
                 # Saves a current mark
                 elif key == config.mark_save_current:
@@ -221,6 +214,8 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
+
+
     def getInput(self, prompt, input_length):
         curses.echo()
         self.window.addstr(0,0,prompt)
@@ -287,13 +282,31 @@ class MyApp(object):
             self.song.get_position()
             )
         self.song.play()
-        
+
+    def createNewMark(self):
+        """ 
+        Method to create a new block and set it to current.
+        """
+        try:
+            if self.current_mark:
+                sounds.error_sound(self.volume)
+            else:
+                count = len(self.marks)
+                self.current_mark = Mark()
+                self.marks.append(self.current_mark)
+                self.poll_thread.print_to_screen('block {}'.format(count+1))
+        except Exception as ex:
+            self.log(ex)
+
     def saveCurrentMark(self):
+        """
+        Method checks that block is finished and if it is, save it and remove it from the current block.
+        """
         # check to make sure there is an active mark and that both the beginning and end have
         # been entered
         if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
             self.current_mark.reset()
-            self.marks.append(self.current_mark)
+            # self.marks.append(self.current_mark)
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
             self.marks = sorted(self.marks, key=itemgetter('start'))
@@ -401,6 +414,7 @@ class MyApp(object):
         # os.remove(temp_file)
 
     def cycleThroughMarks(self):
+        self.poll_thread.print_to_screen('Block {}'.format(self.markItr + 1))
         self.current_mark = self.marks[self.markItr]
         self.changePositionBySecondOffset(-2, self.current_mark.start)
         if len(self.marks) > self.markItr+1:
@@ -427,7 +441,6 @@ class MyApp(object):
                 return None
         self.song.set_position(new_pos)
         self.song.play()
-
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
