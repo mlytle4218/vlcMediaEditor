@@ -83,8 +83,11 @@ class MyApp(object):
         self.media.parse()
         self.poll_thread = WorkerThread(self)
         self.poll_thread.start()
-
+        
         self.duration = self.media.get_duration()
+        if self.duration <= 0:
+            self.duration = self.ffprobe_get_length(self.original_file)
+            
         try:
             while True:
                 self.position = self.song.get_position()
@@ -214,6 +217,11 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
+    def ffprobe_get_length(self, input_file):
+        #ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
+        command = ['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1', input_file]
+        result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        return float(result.stdout)
 
 
     def getInput(self, prompt, input_length):
@@ -430,14 +438,16 @@ class MyApp(object):
                 new_pos = 0
                 # print out remaining time instead of jumping to end
                 left = self.poll_thread.timeStamp(self.duration, self.song.get_position())
-                self.window.addstr(0,0,"the most you can jump backwards is " + left)
+                # self.window.addstr(0,0,"the most you can jump backwards is " + left)
+                self.poll_thread.print_to_screen('the most you can jump backwoards is {}'.format(left))
                 return None
         else:
             if new_pos > 1:
                 new_pos = 1
                 # print out remaining time instead of jumping to end
                 left = self.poll_thread.timeStamp(self.duration, 1 - self.song.get_position())
-                self.window.addstr(0,0,"the most you can jump forward is " + left)
+                self.poll_thread.print_to_screen('the most you can jump forwards is {}'.format(left))
+                # self.window.addstr(0,0,"the most you can jump forward is " + left)
                 return None
         self.song.set_position(new_pos)
         self.song.play()
