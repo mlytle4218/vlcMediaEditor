@@ -19,26 +19,6 @@ from workerThread import WorkerThread
 
 class MyApp(object):
 
-    def update_rate(self, amount):
-        self.rate += amount
-        self.song.set_rate(self.rate)
-
-    def normalize_rate(self):
-        self.rate = 1
-        self.song.set_rate(self.rate)
-
-    def log(self, input):
-        input = str(input)
-        with open("log.txt", "a") as myfile:
-            string = datetime.datetime.fromtimestamp(
-                time.time()).strftime('%Y-%m-%d %H:%M:%S')
-            string = string + ' - ' + input + '\n'
-            myfile.write(string)
-
-    def mark_to_milliseconds(self, mark):
-        milliseconds = int(self.duration * mark)
-        return milliseconds
-
     def __init__(self, stdscreen):
         self.rate = 1
         self.position = 0
@@ -210,6 +190,12 @@ class MyApp(object):
 
                 elif key == config.jump_specific:
                     self.jumpSpecificTime()
+
+                elif key == config.block_from_begining:
+                    self.begining_ending_block(True)
+
+                elif key == config.block_till_end:
+                    self.begining_ending_block(False)
         except KeyboardInterrupt:
             pass
 
@@ -218,10 +204,53 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
+    def begining_ending_block(self, start):
+        """
+        Method to make a block starting from the begining of the file to the current position or from the current position to the end of the file
+
+        Arguments:
+        start: Boolean - if True, then the block is from the begining to the current position, if False -  from the current position to the end of the file
+        """
+        try:
+            if self.current_mark:
+                sounds.error_sound(self.volume)
+            else:
+                mark = Mark()
+                if start:
+                    mark.start = 0
+                    mark.end = self.song.get_position()
+                else:
+                    mark.start = self.song.get_position()
+                    mark.end = 1
+                self.marks.append(mark)
+                self.marks = sorted(self.marks, key=itemgetter('start'))
+                self.print_to_screen('saved')
+        except Exception as ex:
+            self.log(ex)
+
+    def update_rate(self, amount):
+        self.rate += amount
+        self.song.set_rate(self.rate)
+
+    def normalize_rate(self):
+        self.rate = 1
+        self.song.set_rate(self.rate)
+
+    def log(self, input):
+        input = str(input)
+        with open("log.txt", "a") as myfile:
+            string = datetime.datetime.fromtimestamp(
+                time.time()).strftime('%Y-%m-%d %H:%M:%S')
+            string = string + ' - ' + input + '\n'
+            myfile.write(string)
+
+    def mark_to_milliseconds(self, mark):
+        milliseconds = int(self.duration * mark)
+        return milliseconds
+
     def print_to_screen(self, output):
         self.window.clear()
         self.window.addstr(0,0,output)
-
 
     def ffprobe_get_length(self, input_file):
         #ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
@@ -471,7 +500,7 @@ if __name__ == '__main__':
                     break
                 if output:
                     print(output.strip())
-            rc = process.poll()
+            # rc = process.poll()
             # subprocess.call(final_command)
             os.remove(temp_file)
     else:

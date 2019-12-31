@@ -18,6 +18,8 @@ current_time = ord('t')
 jump_specific = ord('j')
 volume_up = ord('u')
 volume_down = ord('d')
+block_from_begining = ord('B')
+block_till_end = ord('E')
 
 
 
