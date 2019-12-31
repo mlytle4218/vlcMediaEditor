@@ -196,6 +196,9 @@ class MyApp(object):
 
                 elif key == config.block_till_end:
                     self.begining_ending_block(False)
+
+                elif key == config.delete_block:
+                    self.delete_block()
         except KeyboardInterrupt:
             pass
 
@@ -205,9 +208,15 @@ class MyApp(object):
         curses.doupdate()
 
     def delete_block(self):
+        """
+        Method to remove block from self.marks
+        """
         if self.current_mark:
-            pass
-
+            self.log(self.markItr)
+            self.marks.pop(self.markItr)
+            if self.markItr > 0:
+                self.markItr -= 1
+            self.print_to_screen('Block deleted')
 
     def begining_ending_block(self, start):
         """
@@ -229,6 +238,7 @@ class MyApp(object):
                     mark.end = 1
                 self.marks.append(mark)
                 self.marks = sorted(self.marks, key=itemgetter('start'))
+                self.markItr += 1
                 self.print_to_screen('saved')
         except Exception as ex:
             self.log(ex)
@@ -357,6 +367,7 @@ class MyApp(object):
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
             self.marks = sorted(self.marks, key=itemgetter('start'))
+            self.markItr += 1
             self.print_to_screen('saved')
         else:
             sounds.error_sound(self.volume)
@@ -461,14 +472,14 @@ class MyApp(object):
         # os.remove(temp_file)
 
     def cycleThroughMarks(self):
-        self.current_mark = self.marks[self.markItr]
-        self.changePositionBySecondOffset(-2, self.current_mark.start)
-        self.log('Block {}'.format(self.markItr + 1))
-        self.print_to_screen('Block {}'.format(self.markItr + 1))
         if len(self.marks) > self.markItr+1:
             self.markItr += 1
         else:
             self.markItr = 0
+        self.current_mark = self.marks[self.markItr]
+        self.changePositionBySecondOffset(-2, self.current_mark.start)
+        self.print_to_screen('Block {}'.format(self.markItr + 1))
+        time.sleep(0.25)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
         cur_sec = round(cur_pos * self.duration) + (sec_offset * 1000)

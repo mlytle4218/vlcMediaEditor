@@ -20,11 +20,11 @@ volume_up = ord('u')
 volume_down = ord('d')
 block_from_begining = ord('B')
 block_till_end = ord('E')
-
+delete_block = ord('d')
 
 
 jump_time = 5
-play_speed_rate = 0.25
+play_speed_rate = 0.5
 
 
 volume = 1
