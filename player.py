@@ -66,7 +66,7 @@ class MyApp(object):
         
         self.duration = self.media.get_duration()
         if self.duration <= 0:
-            self.duration = self.ffprobe_get_length(self.original_file)
+            self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
 
         try:
             while True:
@@ -185,7 +185,7 @@ class MyApp(object):
                     self.normalize_rate()
 
                 elif key == config.current_time:
-                    c_time = self.poll_thread.print_out_time()
+                    c_time = self.poll_thread.timeStamp(self.duration, self.song.get_position())
                     self.print_to_screen(c_time)
 
                 elif key == config.jump_specific:
@@ -203,6 +203,11 @@ class MyApp(object):
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
+
+    def delete_block(self):
+        if self.current_mark:
+            pass
+
 
     def begining_ending_block(self, start):
         """

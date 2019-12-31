@@ -28,10 +28,10 @@ class WorkerThread(threading.Thread):
             string = string + ' - ' + input + '\n'
             myfile.write(string)
 
-    def print_out_time(self):
-        time = self.timeStamp(self.song.duration, self.current)
-        # self.print_to_screen(time)
-        return time
+    # def print_out_time(self):
+    #     time = self.timeStamp(self.song.duration, self.current)
+    #     # self.print_to_screen(time)
+    #     return time
 
     # def print_to_screen(self, output):
     #     self.song.window.clear()
@@ -102,24 +102,22 @@ class WorkerThread(threading.Thread):
 
     def timeStamp(self,duration,current):
         out = duration * current
-
-        millis = int(out)
-        seconds = int((millis/1000) % 60)
-        minutes = (millis/(1000*60)) % 60
-        minutes = int(minutes)
-        hours = int((millis/(1000*60*60)) % 24)
-        time = ""
-        # if hours >= 1:
-        #     time = "{} hours {} minutes {}  seconds".format(hours, minutes, seconds)
-        # else:
-        #     time = "{} minutes {} seconds".format(minutes, seconds)
-        if hours >= 1:
-            time = "{} hours ".format(hours)
-        if minutes >= 1:
-            time += "{} minutes ".format(minutes)
-        if seconds >= 1:
-            time  += "{} seconds".format(seconds)
-        return time
+        try:
+            millis = int(out)
+            seconds = int((millis/1000) % 60)
+            minutes = (millis/(1000*60)) % 60
+            minutes = int(minutes)
+            hours = int((millis/(1000*60*60)) % 24)
+            time = ""
+            if hours >= 1:
+                time = "{} hours ".format(hours)
+            if minutes >= 1:
+                time += "{} minutes ".format(minutes)
+            if seconds >= 1:
+                time  += "{} seconds".format(seconds)
+            return time
+        except Exception as ex:
+            self.log(ex)
 
     # used to shut down the worker thread
     def join(self, timeout=None):
