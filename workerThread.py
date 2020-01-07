@@ -92,8 +92,6 @@ class WorkerThread(threading.Thread):
                     # mark relative to the current time. because there could be variation between the polled
                     # time from vlc and the current mark, it needs a cushion to test against. This needs to be converted
                     # to a algorith relative to the length of the file.
-                    self.difference = (
-                        125 / self.song.duration) * self.song.rate
 
                     self.last = self.current
                     self.song.window.refresh()
@@ -104,7 +102,8 @@ class WorkerThread(threading.Thread):
         out = duration * current
         try:
             millis = int(out)
-            seconds = int((millis/1000) % 60)
+            seconds = round((millis/1000) % 60, 3)
+            # seconds = int((millis/1000) % 60)
             minutes = (millis/(1000*60)) % 60
             minutes = int(minutes)
             hours = int((millis/(1000*60*60)) % 24)

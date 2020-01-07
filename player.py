@@ -64,9 +64,11 @@ class MyApp(object):
         self.poll_thread = WorkerThread(self)
         self.poll_thread.start()
         
-        self.duration = self.media.get_duration()
-        if self.duration <= 0:
-            self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
+        # self.duration = self.media.get_duration()
+        # self.log(self.duration)
+        # if self.duration <= 0:
+        #     self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
+        self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
 
         try:
             while True:
@@ -178,6 +180,7 @@ class MyApp(object):
                     global final_command
                     global temp_file
                     final_command, temp_file = self.applyEdits()
+                    self.log(final_command)
                     break
 
                 # Go back to normal speed
@@ -386,6 +389,7 @@ class MyApp(object):
                 self.current_mark.start = begin_position_check
                 sounds.mark_start_sound(self.volume)
                 self.print_to_screen('begining')
+                self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
             else:
                 self.log('overlap')
                 sounds.error_sound(self.volume)
@@ -407,6 +411,7 @@ class MyApp(object):
                 self.current_mark.end = begin_position_check
                 sounds.mark_end_sound(self.volume)
                 self.print_to_screen('end')
+                self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
             else:
                 sounds.error_sound(self.volume)
         else:
@@ -441,21 +446,29 @@ class MyApp(object):
         for i, each in enumerate(self.marks):
             if i == 0:
                 select += """between(t,{},{})""".format(
-                    int(self.mark_to_milliseconds(each.start) / 1000),
-                    int(self.mark_to_milliseconds(each.end) / 1000),
+                    (self.mark_to_milliseconds(each.start) / 1000),
+                    # int(self.mark_to_milliseconds(each.start) / 1000),
+                    (self.mark_to_milliseconds(each.end) / 1000),
+                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
                 aselect += """between(t,{},{})""".format(
-                    int(self.mark_to_milliseconds(each.start) / 1000),
-                    int(self.mark_to_milliseconds(each.end) / 1000),
+                    (self.mark_to_milliseconds(each.start) / 1000),
+                    # int(self.mark_to_milliseconds(each.start) / 1000),
+                    (self.mark_to_milliseconds(each.end) / 1000),
+                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
             else:
                 select += """+between(t,{},{})""".format(
-                    int(self.mark_to_milliseconds(each.start) / 1000),
-                    int(self.mark_to_milliseconds(each.end) / 1000),
+                    (self.mark_to_milliseconds(each.start) / 1000),
+                    # int(self.mark_to_milliseconds(each.start) / 1000),
+                    (self.mark_to_milliseconds(each.end) / 1000),
+                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
                 aselect += """+between(t,{},{})""".format(
-                    int(self.mark_to_milliseconds(each.start) / 1000),
-                    int(self.mark_to_milliseconds(each.end) / 1000),
+                    (self.mark_to_milliseconds(each.start) / 1000),
+                    # int(self.mark_to_milliseconds(each.start) / 1000),
+                    (self.mark_to_milliseconds(each.end) / 1000),
+                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
 
         select += """',setpts=N/FRAME_RATE/TB """
