@@ -5,10 +5,10 @@ import threading
 import sounds
 
 class WorkerThread(threading.Thread):
-    """ A worker thread that polls the vlc api for current position 
-        and calls options as necessary
+    """
+    A worker thread that polls the vlc api for current position and calls options as necessary
 
-        Ask the thread to stop by calling its join() method.
+    Ask the thread to stop by calling its join() method.
     """
 
     def __init__(self, song):
@@ -28,16 +28,6 @@ class WorkerThread(threading.Thread):
             string = string + ' - ' + input + '\n'
             myfile.write(string)
 
-    # def print_out_time(self):
-    #     time = self.timeStamp(self.song.duration, self.current)
-    #     # self.print_to_screen(time)
-    #     return time
-
-    # def print_to_screen(self, output):
-    #     self.song.window.clear()
-    #     self.song.window.addstr(0,0,output)
-
-
     def run(self):
         # As long as we weren't asked to stop, try to take new tasks from the
         # queue. The tasks are taken with a blocking 'get', so no CPU
@@ -52,41 +42,10 @@ class WorkerThread(threading.Thread):
                     # cnt = 0
                     for each in self.song.marks:
                         if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
-                        # if self.song.now_okay and each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
                             sounds.mark_start_sound(self.song.volume)
 
                         if each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
-                        # if self.song.now_okay and each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
                             sounds.mark_end_sound(self.song.volume)
-
-                    # self.song.window.clear()
-                    #print out the current vlc decimal position
-                    # self.song.window.addstr(cnt, 0, str(self.current))
-
-                    # print out the current timeStamp of position
-                    # cnt += 1
-                    # time = self.timeStamp(self.song.duration, self.current)
-                    # self.song.window.addstr(cnt, 0, str(time))
-
-
-
-
-
-
-                    #print out each of the marks start and stop
-                    # cnt += 1
-                    # for each in self.song.marks:
-                    #     self.song.window.addstr(cnt, 0, str(each.start))
-                    #     cnt += 1
-                    #     self.song.window.addstr(cnt, 0, str(each.end))
-                    #     cnt += 1
-
-
-
-
-
-
-
 
                     # update the difference - this is a 'magic' number to give leaway to testing to each
                     # mark relative to the current time. because there could be variation between the polled
@@ -103,7 +62,6 @@ class WorkerThread(threading.Thread):
         try:
             millis = int(out)
             seconds = round((millis/1000) % 60, 3)
-            # seconds = int((millis/1000) % 60)
             minutes = (millis/(1000*60)) % 60
             minutes = int(minutes)
             hours = int((millis/(1000*60*60)) % 24)

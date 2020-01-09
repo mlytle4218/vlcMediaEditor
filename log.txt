@@ -1,4 +1,5 @@
-2020-01-06 18:00:05 - 3639704
-2020-01-06 18:08:12 - 11 minutes 31.562000000000012 seconds
-2020-01-06 18:08:34 - 13 minutes 1.768000000000029 seconds
-2020-01-06 18:08:55 - ['ffmpeg', '-i', 'whyys-old.mp3', '-vf', "select='between(t,0.0,691.562)+between(t,781.768,3184.718)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,691.562)+between(t,781.768,3184.718)',asetpts=N/SR/TB", 'whyys.mp3']
+2020-01-08 15:56:21 - ['ffmpeg', '-i', 'phil.mp3', '-vf', "select='between(t,0.0,5.912)+between(t,20.491,25.412)+between(t,31.71,314.279)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,5.912)+between(t,20.491,25.412)+between(t,31.71,314.279)',asetpts=N/SR/TB", 'phil-edited.mp3']
+2020-01-08 15:57:11 - ['ffmpeg', '-i', 'phil.mp3', '-vf', "select='between(t,0.0,5.912)+between(t,20.491,25.412)+between(t,31.71,314.279)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,5.912)+between(t,20.491,25.412)+between(t,31.71,314.279)',asetpts=N/SR/TB", 'phil-edited.mp3']
+2020-01-08 16:00:11 - 1
+2020-01-08 16:00:14 - 0
+2020-01-08 16:00:18 - ['ffmpeg', '-i', 'phil.mp3', '-vf', "select='between(t,0.0,336.613)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,336.613)',asetpts=N/SR/TB", 'phil-edited.mp3']

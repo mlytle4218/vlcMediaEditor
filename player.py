@@ -8,6 +8,7 @@ import time
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from curses import panel
 from operator import itemgetter
+import pickle
 
 import config
 import sounds
@@ -69,6 +70,18 @@ class MyApp(object):
         # if self.duration <= 0:
         #     self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
         self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
+
+
+        self.file_path = os.path.dirname(os.path.realpath(sys.argv[1]))
+
+        self.file_basename=os.path.basename(sys.argv[1])
+
+        self.file_name = os.path.splitext(self.file_basename)[0]
+
+        self.state_file_name = os.path.join(self.file_path, self.file_name + ".state")
+
+        self.read_state_information()
+
 
         try:
             while True:
@@ -178,8 +191,8 @@ class MyApp(object):
                 # to the original file
                 elif key == config.begin_edits:
                     global final_command
-                    global temp_file
-                    final_command, temp_file = self.applyEdits()
+                    global edited_file
+                    final_command, edited_file = self.applyEdits()
                     self.log(final_command)
                     break
 
@@ -209,6 +222,40 @@ class MyApp(object):
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
+
+    def write_state_information(self):
+        try:
+            state = open(self.state_file_name, 'wb')
+            pickle.dump(self.marks, state)
+        except Exception as e:
+            self.log(e)
+        # try:
+        #     marks =[]
+            
+        #     episode_ids = []
+        #     for each in download_queue:
+        #         episode_ids.append(each.episode_id)
+        #     state = open(config.pickled_file_location, 'wb')
+        #     pickle.dump(episode_ids, state)
+        # except Exception as e:
+        #     self.log(e)
+
+    def read_state_information(self):
+        try:
+            state = open(self.state_file_name, 'rb')
+            self.marks = pickle.load(state)
+        except IOError:
+            self.log("No file found")
+        # download_queue_local = []
+        # state = open(config.pickled_file_location, 'rb')
+        # episode_ids = pickle.load(state)
+        # for each in episode_ids:
+        #     epi = sql.get_episode_by_id(each)
+        #     if epi:
+        #         download_queue_local.append(epi)
+        #     else:
+        #         sql.log("could not read episode with episode_id:{}".format(each))
+        # return download_queue_local
 
     def delete_block(self):
         """
@@ -354,7 +401,8 @@ class MyApp(object):
                 count = len(self.marks)
                 self.current_mark = Mark()
                 self.marks.append(self.current_mark)
-                self.print_to_screen('block {}'.format(count+1))
+                self.write_state_information()
+                self.print_to_screen('block {}.'.format(count+1))
         except Exception as ex:
             self.log(ex)
 
@@ -372,6 +420,7 @@ class MyApp(object):
             self.marks = sorted(self.marks, key=itemgetter('start'))
             self.markItr += 1
             self.print_to_screen('saved')
+            self.write_state_information()
         else:
             sounds.error_sound(self.volume)
 
@@ -390,6 +439,7 @@ class MyApp(object):
                 sounds.mark_start_sound(self.volume)
                 self.print_to_screen('begining')
                 self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
+                self.write_state_information()
             else:
                 self.log('overlap')
                 sounds.error_sound(self.volume)
@@ -412,6 +462,7 @@ class MyApp(object):
                 sounds.mark_end_sound(self.volume)
                 self.print_to_screen('end')
                 self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
+                self.write_state_information()
             else:
                 sounds.error_sound(self.volume)
         else:
@@ -423,13 +474,11 @@ class MyApp(object):
         self.song.stop()
 
         filename, file_extension = os.path.splitext(self.original_file)
-        temp_file = filename + "-old" + file_extension
-        os.rename(self.original_file, temp_file)
-        # command = ['ffmpeg', '-i', temp_file]
-        command = ['ffmpeg', '-i', temp_file]
-        # command = ['ffmpeg', "-loglevel", "error", '-i', temp_file]
+        edited_file = filename + "-edited" + file_extension
+        # os.rename(self.original_file, edited_file)
+        command = ['ffmpeg', '-i', self.original_file]
 
-        select = """ffmpeg -i {} -vf "select='""".format(temp_file)
+        # select = """ffmpeg -i {} -vf "select='""".format(edited_file)
         select = "select='"
         aselect = "aselect='"
         last = 0
@@ -477,12 +526,13 @@ class MyApp(object):
         command.append(select)
         command.append('-af')
         command.append(aselect)
-        command.append(self.original_file)
-        return command,temp_file
+        # command.append(self.original_file)
+        command.append(edited_file)
+        return command,edited_file
         # global final_command
         # final_command = command
         # subprocess.call(command)
-        # os.remove(temp_file)
+        # os.remove(edited_file)
 
     def cycleThroughMarks(self):
         if len(self.marks) > self.markItr+1:
@@ -518,19 +568,57 @@ class MyApp(object):
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
-        final_command = None
-        temp_file = None
-        curses.wrapper(MyApp)
-        if final_command:
-            process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    print(output.strip())
-            # rc = process.poll()
-            # subprocess.call(final_command)
-            os.remove(temp_file)
+        if sys.argv[1] == '--help' or sys.argv[1] == '-h':
+            print('Usage: vlc-edit [FILE]')
+            print('')
+            print('CREATING, SETTING AND SAVING BLOCKS')
+            print('To remove a section from a file, the user must create and save a block. When created, the block is in')
+            print('edit mode. The user can change the beginning and ending of each block. Once saved, the user can create')
+            print('new blocks. To edit an existing block, the user has to cycle through the existing blocks. It will place')
+            print('the user 2 seconds before the block unless the block starts at the beginning of the file')
+            print('To begin a new block press {}.'.format(chr(config.mark_create_new)))
+            print('To set the starting point of a block press {}.'.format(chr(config.mark_record_start_position)))
+            print('To set the ending point of a block press {}.'.format(chr(config.mark_record_end_position)))
+            print('To save the current block press {}.'.format(chr(config.mark_save_current)))
+            print('To set a block from the beginning of the file to the current position press {}.'.format(chr(config.block_from_begining)))
+            print('To set a block from the current location till the end of the file press {}.'.format(chr(config.block_till_end)))
+            print('To delete the current block press {}.'.format(chr(config.delete_block)))
+            print('To edit existing blocks, press {} to cycle through blocks in edit mode.'.format(chr(config.cycle_through_marks)))
+            print('')
+            print('MOVING THROUGH THE FILE')
+            print('To play or pause existing file press {}.'.format(config.play_pause_desc))
+            print('To jump ahead {} seconds press {}.'.format(config.jump_time, (config.jump_forward_desc)))
+            print('To jump back {} seconds press {}.'.format(config.jump_time, config.jump_back_desc))
+            print('To speed up play speed press {}.'.format((config.play_speed_up_desc)))
+            print('To slow down play speed press {}.'.format((config.play_speed_down_desc)))
+            print('To go back to normal play speed press {}.'.format(chr(config.normal_speed)))
+            print('To jump to a specific time forward or backward press {}. This will stop the playing of the file and '.format(chr(config.jump_specific)))
+            print('ask a few questions. First it will ask forward? No response will result in a forward jump, where as')
+            print('a - will result in a backward jump. Then it will ask for hours. Enter the number of hours or press')
+            print('return to accept as zero. Then it will ask for minutes and then seconds. After the amounts are entered')
+            print('it will jump that far ahead')
+            print('To quit the program press {}'.format(chr(config.quit_program)))
+            print('To apply the edits to the file, press {}'.format(chr(config.begin_edits)))
+            print('')
+            print('OTHER COMMANDS')
+            print('To print out the current time, press {}'.format(chr(config.current_time)))
+            print('To raise the volume of the sound effects, press {}'.format(chr(config.volume_up)))
+            print('To lower the volume of the sound effects, press {}'.format(chr(config.volume_down)))
+        else:
+            final_command = None
+            edited_file = None
+            curses.wrapper(MyApp)
+            if final_command:
+                # print(final_command)
+                process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
+                while True:
+                    output = process.stdout.readline()
+                    if output == '' and process.poll() is not None:
+                        break
+                    if output:
+                        print(output.strip())
+                # rc = process.poll()
+                # subprocess.call(final_command)
+                # os.remove(edited_file)
     else:
         print("requires a file to edit")
