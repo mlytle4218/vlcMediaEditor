@@ -24,8 +24,7 @@ cycle_through_marks_stop = ord('v')
 block_from_begining = ord('B')
 block_till_end = ord('E')
 delete_block = ord('d')
-nudge_left = ord('l')
-nudge_right = ord('r')
+nudge = ord('l')
 
 # Quitting and applying edits
 quit_program = ord('q')
