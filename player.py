@@ -223,8 +223,8 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
-    def nudgeBlock(self, current, nudgeForward=True):
-        pass
+    def nudgeBlock(self, current, nudgeIncrement=config.nudge_increment, nudgeForward=True):
+        return current + nudgeIncrement if nudgeForward == True else current - nudgeIncrement
 
     def write_state_information(self):
         try:
