@@ -223,6 +223,9 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
+    def nudgeBlock(self, current, nudgeForward=True):
+        pass
+
     def write_state_information(self):
         try:
             state = open(self.state_file_name, 'wb')
@@ -469,16 +472,11 @@ class MyApp(object):
             sounds.error_sound(self.volume)
 
     def applyEdits(self):
-        # self.print_to_screen('final')
-        # self.poll_thread.join()
         self.song.stop()
 
         filename, file_extension = os.path.splitext(self.original_file)
         edited_file = filename + "-edited" + file_extension
-        # os.rename(self.original_file, edited_file)
         command = ['ffmpeg', '-i', self.original_file]
-
-        # select = """ffmpeg -i {} -vf "select='""".format(edited_file)
         select = "select='"
         aselect = "aselect='"
         last = 0
@@ -489,35 +487,26 @@ class MyApp(object):
             last = temp
         n = Mark()
         n.start = last
-        # self.log(str(int(self.duration / 1000)))
         n.end = 1
         self.marks.append(n)
         for i, each in enumerate(self.marks):
             if i == 0:
                 select += """between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
-                    # int(self.mark_to_milliseconds(each.start) / 1000),
                     (self.mark_to_milliseconds(each.end) / 1000),
-                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
                 aselect += """between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
-                    # int(self.mark_to_milliseconds(each.start) / 1000),
                     (self.mark_to_milliseconds(each.end) / 1000),
-                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
             else:
                 select += """+between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
-                    # int(self.mark_to_milliseconds(each.start) / 1000),
                     (self.mark_to_milliseconds(each.end) / 1000),
-                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
                 aselect += """+between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
-                    # int(self.mark_to_milliseconds(each.start) / 1000),
                     (self.mark_to_milliseconds(each.end) / 1000),
-                    # int(self.mark_to_milliseconds(each.end) / 1000),
                 )
 
         select += """',setpts=N/FRAME_RATE/TB """
@@ -526,13 +515,8 @@ class MyApp(object):
         command.append(select)
         command.append('-af')
         command.append(aselect)
-        # command.append(self.original_file)
         command.append(edited_file)
         return command,edited_file
-        # global final_command
-        # final_command = command
-        # subprocess.call(command)
-        # os.remove(edited_file)
 
     def cycleThroughMarks(self):
         if len(self.marks) > self.markItr+1:
@@ -616,7 +600,6 @@ if __name__ == '__main__':
             edited_file = None
             curses.wrapper(MyApp)
             if final_command:
-                # print(final_command)
                 process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
                 while True:
                     output = process.stdout.readline()
@@ -624,8 +607,5 @@ if __name__ == '__main__':
                         break
                     if output:
                         print(output.strip())
-                # rc = process.poll()
-                # subprocess.call(final_command)
-                # os.remove(edited_file)
     else:
         print("requires a file to edit")
