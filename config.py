@@ -45,3 +45,4 @@ play_speed_rate = 0.5
 
 volume = 1
 volume_increments = 0.5
+nudge_increment = 0.25
