@@ -215,6 +215,14 @@ class MyApp(object):
 
                 elif key == config.delete_block:
                     self.delete_block()
+
+                elif key == config.nudge:
+                    self.nudgeBeginningOrEnding()
+
+                elif key == config.list_marks:
+                    self.log('bob')
+                    for mark in self.marks:
+                        self.log(mark)
         except KeyboardInterrupt:
             pass
 
@@ -223,8 +231,46 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
 
-    def nudgeBlock(self, current, nudgeIncrement=config.nudge_increment, nudgeForward=True):
-        return current + nudgeIncrement if nudgeForward == True else current - nudgeIncrement
+    def nudgeBeginningOrEnding(self):
+        self.song.pause()
+        beginning_input = self.getInput('Beginning? ',1)
+        if beginning_input.lower() == 'b':
+            self.nudgeForwardOrBackward(self.marks[self.markItr].start)
+        elif beginning_input.lower() == 'e':
+            self.nudgeForwardOrBackward(self.marks[self.markItr].end)
+        else:
+            self.print_to_screen('Invalid Choice')
+            self.song.play()
+            return None
+
+    def nudgeForwardOrBackward(self, mark):
+        forward_input = self.getInput('Forward? ',1)
+        if forward_input == '':
+            self.nudgeBlock(mark, True)
+        elif forward_input == '-':
+            self.nudgeBlock(mark, False)
+        else:
+            self.print_to_screen('Invalid Choice')
+            self.song.play()
+            return None
+
+    def nudgeAmount(self, mark, forward):
+        pass
+
+    def nudgeBlock(self, mark, nudgeForward, nudgeIncrement=config.nudge_increment):
+        """
+        Method to return a value to assign to the nudged value of a block beginning or end.
+
+        Arguments:
+        mark: float - The current position to be nudged.
+        nudgeIncrement: float - The amount to nudge the current position. If not passed, uses the default from the config.
+        nudgeForward: boolean - used to decide if the nudge is a positive or negative value. 
+        """
+        if nudgeForward:
+            mark += nudgeIncrement
+        else:
+            mark -= nudgeIncrement
+        # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
 
     def write_state_information(self):
         try:
@@ -270,6 +316,7 @@ class MyApp(object):
             if self.markItr > 0:
                 self.markItr -= 1
             self.print_to_screen('Block deleted')
+            self.write_state_information()
 
     def begining_ending_block(self, start):
         """
@@ -293,6 +340,7 @@ class MyApp(object):
                 self.marks = sorted(self.marks, key=itemgetter('start'))
                 self.markItr += 1
                 self.print_to_screen('saved')
+                self.write_state_information()
         except Exception as ex:
             self.log(ex)
 
@@ -524,7 +572,7 @@ class MyApp(object):
         else:
             self.markItr = 0
         self.current_mark = self.marks[self.markItr]
-        self.changePositionBySecondOffset(-2, self.current_mark.start)
+        self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
         self.print_to_screen('Block {}'.format(self.markItr + 1))
         time.sleep(0.25)
 
