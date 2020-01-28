@@ -21,6 +21,7 @@ from workerThread import WorkerThread
 class MyApp(object):
 
     def __init__(self, stdscreen):
+        
         self.rate = 1
         self.position = 0
         self.is_marking = False
@@ -56,7 +57,11 @@ class MyApp(object):
         # self.marks.append(n)
 
         self.original_file = sys.argv[1]
-        self.instance = vlc.Instance(('--no-video'))
+        # this extra step is to set the verbosity of the log errors so they
+        # don't print to the screen
+        self.VLC = vlc
+        self.VLC.libvlc_set_log_verbosity(None, 1)
+        self.instance = self.VLC.Instance(('--no-video'))
         self.song = self.instance.media_player_new()
         self.media = self.instance.media_new(self.original_file)
         self.song.set_media(self.media)
