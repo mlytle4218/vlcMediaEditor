@@ -65,6 +65,11 @@ class MyApp(object):
         self.song = self.instance.media_player_new()
         self.media = self.instance.media_new(self.original_file)
         self.song.set_media(self.media)
+        # self.print_to_screen('loading file')
+        print('loading file')
+        self.duration = self.get_file_length(self.original_file)
+        # self.log('duration')
+        # self.log(self.duration)
         self.song.play()
         self.media.parse()
         self.poll_thread = WorkerThread(self)
@@ -74,7 +79,7 @@ class MyApp(object):
         # self.log(self.duration)
         # if self.duration <= 0:
         #     self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
-        self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
+        # self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
 
 
         self.file_path = os.path.dirname(os.path.realpath(sys.argv[1]))
@@ -317,7 +322,9 @@ class MyApp(object):
         """
         if self.current_mark:
             self.log(self.markItr)
+            self.log(len(self.marks))
             self.marks.pop(self.markItr)
+            self.log(len(self.marks))
             if self.markItr > 0:
                 self.markItr -= 1
             self.print_to_screen('Block deleted')
@@ -378,6 +385,18 @@ class MyApp(object):
         command = ['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1', input_file]
         result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         return float(result.stdout)
+
+    def get_file_length(self, input_file):
+        time = 0
+        command  = [ 'ffmpeg','-i',input_file,'-f','null','-' ]
+        result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        lines = result.stdout.decode('utf-8').splitlines()
+        for line in lines:
+            for word in line.split():
+                if word.startswith('time='):
+                    time_temp = word.split("=")[1].split(":")
+                    time = int(time_temp[0]) * 3600 + int(time_temp[1])*60 + round(float(time_temp[2]))
+        return time
 
     def getInput(self, prompt, input_length):
         curses.echo()
