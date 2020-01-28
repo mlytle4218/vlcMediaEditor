@@ -396,7 +396,7 @@ class MyApp(object):
                 if word.startswith('time='):
                     time_temp = word.split("=")[1].split(":")
                     time = int(time_temp[0]) * 3600 + int(time_temp[1])*60 + round(float(time_temp[2]))
-        return time
+        return time * 1000
 
     def getInput(self, prompt, input_length):
         curses.echo()
