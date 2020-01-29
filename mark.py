@@ -9,6 +9,9 @@ class Mark():
         self.end = -1
     
     def is_null(self):
+        """
+        Method to show if the mark is not fully developed
+        """
         return self.start == -1 or self.end == -1
 
     def __str__(self):
@@ -18,6 +21,9 @@ class Mark():
         return self.start
 
     def reset(self):
+        """
+        Method to exchange the start and end points if they are backwards.
+        """
         if self.start > self.end:
             temp = self.start
             self.start = self.end
