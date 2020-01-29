@@ -384,10 +384,14 @@ class MyApp(object):
             myfile.write(string)
 
     def mark_to_milliseconds(self, mark):
-        milliseconds = int(self.duration * mark)
-        return milliseconds
+        return int(self.duration * mark)
 
     def print_to_screen(self, output):
+        """
+        Method that prints the time (formatted) of the current postion
+
+        Arguments - output - string - what is supposed to printed to screen
+        """
         self.window.clear()
         self.window.addstr(0,0,output)
 
