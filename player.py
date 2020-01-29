@@ -701,13 +701,13 @@ if __name__ == '__main__':
             final_command = None
             edited_file = None
             curses.wrapper(MyApp)
-            # if final_command:
-            #     process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
-            #     while True:
-            #         output = process.stdout.readline()
-            #         if output == '' and process.poll() is not None:
-            #             break
-            #         if output:
-            #             print(output.strip())
+            if final_command:
+                process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
+                while True:
+                    output = process.stdout.readline()
+                    if output == '' and process.poll() is not None:
+                        break
+                    if output:
+                        print(output.strip())
     else:
         print("requires a file to edit")
