@@ -16,7 +16,9 @@ import vlc
 from mark import Mark
 from workerThread import WorkerThread
 
-
+class State():
+    marks = []
+    duration  = 0 
 
 class MyApp(object):
 
@@ -26,6 +28,7 @@ class MyApp(object):
         self.position = 0
         self.is_marking = False
         self.marks = []
+        self.state = State()
         self.markItr = 0
         self.current_mark = None
         # self.now_okay = True
@@ -210,19 +213,27 @@ class MyApp(object):
                 elif key == config.normal_speed:
                     self.normalize_rate()
 
+                # print the current time formatted to the screen
                 elif key == config.current_time:
                     c_time = self.poll_thread.timeStamp(self.duration, self.song.get_position())
                     self.print_to_screen(c_time)
 
+                # causes the playback to stop and allows user to enter a spcific 
+                # amount of time to move forward or backward
                 elif key == config.jump_specific:
                     self.jumpSpecificTime()
 
+                # creates a mark that starts at the beginning of the file to the
+                # current position
                 elif key == config.block_from_begining:
                     self.begining_ending_block(True)
 
+                # creates a mark that starts from the current position to the end 
+                # fo the file
                 elif key == config.block_till_end:
                     self.begining_ending_block(False)
 
+                # deletes the current block
                 elif key == config.delete_block:
                     self.delete_block()
 
@@ -543,8 +554,16 @@ class MyApp(object):
         else:
             sounds.error_sound(self.volume)
 
+    def check_for_null_blocks(self):
+        """
+        Method to check the blocks for any that did have the beginning or ending specified 
+        """
+        self.marks = list(filter(lambda x : x.is_null() != True, self.marks))
+        self.log('check_for_null_blocks')
+
     def applyEdits(self):
         self.song.stop()
+        self.check_for_null_blocks()
 
         filename, file_extension = os.path.splitext(self.original_file)
         edited_file = filename + "-edited" + file_extension
@@ -588,6 +607,7 @@ class MyApp(object):
         command.append('-af')
         command.append(aselect)
         command.append(edited_file)
+        self.log(command)
         return command,edited_file
 
     def cycleThroughMarks(self):
@@ -601,8 +621,18 @@ class MyApp(object):
         time.sleep(0.25)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
+        """
+        Method to change the current position of the playing audio 
+
+        Arguments:
+        sec_offset - float - how many seconds to change from the current position,
+        a negative value will go back while a posititve value will move formard
+        curr_postion - float - the vlc position marker - this is a value between 
+        0 and 1.
+        """
         cur_sec = round(cur_pos * self.duration) + (sec_offset * 1000)
         new_pos = cur_sec / self.duration
+        self.log(new_pos)
         if sec_offset < 0:
             if new_pos < 0:
                 new_pos = 0
@@ -671,13 +701,13 @@ if __name__ == '__main__':
             final_command = None
             edited_file = None
             curses.wrapper(MyApp)
-            if final_command:
-                process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
-                while True:
-                    output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
-                        break
-                    if output:
-                        print(output.strip())
+            # if final_command:
+            #     process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
+            #     while True:
+            #         output = process.stdout.readline()
+            #         if output == '' and process.poll() is not None:
+            #             break
+            #         if output:
+            #             print(output.strip())
     else:
         print("requires a file to edit")

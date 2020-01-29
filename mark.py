@@ -7,6 +7,9 @@ class Mark():
     def __init__(self):
         self.start = -1
         self.end = -1
+    
+    def is_null(self):
+        return self.start == -1 or self.end == -1
 
     def __str__(self):
         return str(self.start) + ":" + str(self.end)
