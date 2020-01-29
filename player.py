@@ -27,11 +27,9 @@ class MyApp(object):
         self.rate = 1
         self.position = 0
         self.is_marking = False
-        # self.state.marks = []
         self.state = State()
         self.markItr = 0
         self.current_mark = None
-        # self.now_okay = True
         self.volume = config.volume
         self.applyEditsBoolean = False
 
@@ -50,18 +48,11 @@ class MyApp(object):
         self.panel.top()
         self.panel.show()
         self.window.clear()
-        # n = Mark()
-        # n.start = 0.015
-        # n.end = 0.035
-        # self.state.marks.append(n)
-        # n = Mark()
-        # n.start = 0.125
-        # n.end = 0.268
-        # self.state.marks.append(n)
 
         self.original_file = sys.argv[1]
         # this extra step is to set the verbosity of the log errors so they
         # don't print to the screen
+        # libvlc_set_log_verbosity tooltip says its defunct
         self.VLC = vlc
         self.VLC.libvlc_set_log_verbosity(None, 1)
         self.instance = self.VLC.Instance(('--no-video'))
@@ -263,6 +254,9 @@ class MyApp(object):
         curses.doupdate()
 
     def nudgeBeginningOrEnding(self):
+        """
+        Method to n
+        """
         self.song.pause()
         beginning_input = self.getInput('Beginning? ',1)
         if beginning_input.lower() == 'b':
@@ -304,39 +298,26 @@ class MyApp(object):
         # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
 
     def write_state_information(self):
+        """
+        Method to write the state information to a file named like the original 
+        with a .state extension
+        """
         try:
             state = open(self.state_file_name, 'wb')
             pickle.dump(self.state, state)
         except Exception as e:
             self.log(e)
-        # try:
-        #     marks =[]
-            
-        #     episode_ids = []
-        #     for each in download_queue:
-        #         episode_ids.append(each.episode_id)
-        #     state = open(config.pickled_file_location, 'wb')
-        #     pickle.dump(episode_ids, state)
-        # except Exception as e:
-        #     self.log(e)
 
     def read_state_information(self):
+        """
+        Method to read the saved information about a file from a file named like
+        the original with a .state extension
+        """
         try:
             state = open(self.state_file_name, 'rb')
             self.state = pickle.load(state)
-            # print(self.state.duration)
         except IOError:
             self.log("No file found")
-        # download_queue_local = []
-        # state = open(config.pickled_file_location, 'rb')
-        # episode_ids = pickle.load(state)
-        # for each in episode_ids:
-        #     epi = sql.get_episode_by_id(each)
-        #     if epi:
-        #         download_queue_local.append(epi)
-        #     else:
-        #         sql.log("could not read episode with episode_id:{}".format(each))
-        # return download_queue_local
 
     def delete_block(self):
         """
@@ -379,10 +360,19 @@ class MyApp(object):
             self.log(ex)
 
     def update_rate(self, amount):
+        """
+        Method to change the playback rate.
+
+        Arguments - amount - float - The amount of change in the rate. A positive
+        amount makes it faster. A negative amount makes it slower.
+        """
         self.rate += amount
         self.song.set_rate(self.rate)
 
     def normalize_rate(self):
+        """
+        Method to return the playback rate to normal(1)
+        """
         self.rate = 1
         self.song.set_rate(self.rate)
 
@@ -395,6 +385,11 @@ class MyApp(object):
             myfile.write(string)
 
     def mark_to_milliseconds(self, mark):
+        """
+        Method to change vlc's position to milliseconds
+
+        Argument - mark - float - vlc's position number.
+        """
         return int(self.duration * mark)
 
     def print_to_screen(self, output):
@@ -407,12 +402,22 @@ class MyApp(object):
         self.window.addstr(0,0,output)
 
     def ffprobe_get_length(self, input_file):
+        """
+        Method to get the length of the file - defunct
+
+        Arguments - input_file - string - the path and file name of the file
+        """
         #ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
         command = ['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1', input_file]
         result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         return float(result.stdout)
 
     def get_file_length(self, input_file):
+        """
+        Method to get the length of the original file
+
+        Arguments - input_file - string - the path and file name of the file
+        """
         time = 0
         command  = [ 'ffmpeg','-i',input_file,'-f','null','-' ]
         result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
@@ -425,6 +430,9 @@ class MyApp(object):
         return time * 1000
 
     def getInput(self, prompt, input_length):
+        """
+        Method to get input from the user, more than just one keystroke.
+        """
         curses.echo()
         self.window.addstr(0,0,prompt)
         self.window.refresh()
@@ -433,6 +441,12 @@ class MyApp(object):
         return input
 
     def changeVolume(self, value):
+        """
+        Method to the change the current volume of the ancillary sounds. 
+
+        Arguments - value - float - positive value raises the volume, negative
+        value lowers the volume.
+        """
         self.volume += value
 
     def jumpSpecificTime(self):
@@ -526,6 +540,9 @@ class MyApp(object):
             sounds.error_sound(self.volume)
 
     def startMarkPosition(self):
+        """
+        Method to mark the start position of the current block.
+        """
         if self.current_mark:
             begin_position_check = self.song.get_position()
             okay = True
@@ -549,6 +566,9 @@ class MyApp(object):
             sounds.error_sound(self.volume)
 
     def endMarkPosition(self):
+        """
+        Method to mark the end position of the current block.
+        """
         if self.current_mark:
             begin_position_check = self.song.get_position()
             okay = True
@@ -577,6 +597,9 @@ class MyApp(object):
         self.log('check_for_null_blocks')
 
     def applyEdits(self):
+        """
+        Method to create the final command for editing the original file. 
+        """
         self.song.stop()
         self.check_for_null_blocks()
 
@@ -626,6 +649,9 @@ class MyApp(object):
         return command,edited_file
 
     def cycleThroughMarks(self):
+        """
+        Method to move the playback through the existing blocks.
+        """
         if len(self.state.marks) > self.markItr+1:
             self.markItr += 1
         else:
