@@ -40,7 +40,7 @@ class WorkerThread(threading.Thread):
                 # self.log('bob')
                 try:
                     # cnt = 0
-                    for each in self.song.marks:
+                    for each in self.song.state.marks:
                         if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
                             sounds.mark_start_sound(self.song.volume)
 

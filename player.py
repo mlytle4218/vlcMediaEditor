@@ -27,7 +27,7 @@ class MyApp(object):
         self.rate = 1
         self.position = 0
         self.is_marking = False
-        self.marks = []
+        # self.state.marks = []
         self.state = State()
         self.markItr = 0
         self.current_mark = None
@@ -53,11 +53,11 @@ class MyApp(object):
         # n = Mark()
         # n.start = 0.015
         # n.end = 0.035
-        # self.marks.append(n)
+        # self.state.marks.append(n)
         # n = Mark()
         # n.start = 0.125
         # n.end = 0.268
-        # self.marks.append(n)
+        # self.state.marks.append(n)
 
         self.original_file = sys.argv[1]
         # this extra step is to set the verbosity of the log errors so they
@@ -68,21 +68,7 @@ class MyApp(object):
         self.song = self.instance.media_player_new()
         self.media = self.instance.media_new(self.original_file)
         self.song.set_media(self.media)
-        # self.print_to_screen('loading file')
-        print('loading file')
-        self.duration = self.get_file_length(self.original_file)
-        # self.log('duration')
-        # self.log(self.duration)
-        self.song.play()
-        self.media.parse()
-        self.poll_thread = WorkerThread(self)
-        self.poll_thread.start()
         
-        # self.duration = self.media.get_duration()
-        # self.log(self.duration)
-        # if self.duration <= 0:
-        #     self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
-        # self.duration = int(self.ffprobe_get_length(self.original_file) * 1000)
 
 
         self.file_path = os.path.dirname(os.path.realpath(sys.argv[1]))
@@ -94,6 +80,30 @@ class MyApp(object):
         self.state_file_name = os.path.join(self.file_path, self.file_name + ".state")
 
         self.read_state_information()
+        
+
+        
+        print('loading file')
+        try:
+            if self.state.duration:
+                self.log('self.state.duration')
+                self.duration = self.state.duration
+            else:
+                self.log('self')
+                self.duration = self.get_file_length(self.original_file)
+                self.state.duration = self.duration
+                self.write_state_information()
+        except Exception:
+            quick_state = State()
+            quick_state.marks = self.state
+            quick_state.duration = self.get_file_length(self.original_file)
+            self.state = quick_state
+
+        self.log(self.state.duration)
+        self.song.play()
+        self.media.parse()
+        self.poll_thread = WorkerThread(self)
+        self.poll_thread.start()
 
 
         try:
@@ -241,8 +251,8 @@ class MyApp(object):
                     self.nudgeBeginningOrEnding()
 
                 elif key == config.list_marks:
-                    self.log('bob')
-                    for mark in self.marks:
+                    self.log('current blocks')
+                    for mark in self.state.marks:
                         self.log(mark)
         except KeyboardInterrupt:
             pass
@@ -256,9 +266,9 @@ class MyApp(object):
         self.song.pause()
         beginning_input = self.getInput('Beginning? ',1)
         if beginning_input.lower() == 'b':
-            self.nudgeForwardOrBackward(self.marks[self.markItr].start)
+            self.nudgeForwardOrBackward(self.state.marks[self.markItr].start)
         elif beginning_input.lower() == 'e':
-            self.nudgeForwardOrBackward(self.marks[self.markItr].end)
+            self.nudgeForwardOrBackward(self.state.marks[self.markItr].end)
         else:
             self.print_to_screen('Invalid Choice')
             self.song.play()
@@ -296,7 +306,7 @@ class MyApp(object):
     def write_state_information(self):
         try:
             state = open(self.state_file_name, 'wb')
-            pickle.dump(self.marks, state)
+            pickle.dump(self.state, state)
         except Exception as e:
             self.log(e)
         # try:
@@ -313,7 +323,8 @@ class MyApp(object):
     def read_state_information(self):
         try:
             state = open(self.state_file_name, 'rb')
-            self.marks = pickle.load(state)
+            self.state = pickle.load(state)
+            # print(self.state.duration)
         except IOError:
             self.log("No file found")
         # download_queue_local = []
@@ -329,13 +340,13 @@ class MyApp(object):
 
     def delete_block(self):
         """
-        Method to remove block from self.marks
+        Method to remove block from self.state.marks
         """
         if self.current_mark:
             self.log(self.markItr)
-            self.log(len(self.marks))
-            self.marks.pop(self.markItr)
-            self.log(len(self.marks))
+            self.log(len(self.state.marks))
+            self.state.marks.pop(self.markItr)
+            self.log(len(self.state.marks))
             if self.markItr > 0:
                 self.markItr -= 1
             self.print_to_screen('Block deleted')
@@ -359,8 +370,8 @@ class MyApp(object):
                 else:
                     mark.start = self.song.get_position()
                     mark.end = 1
-                self.marks.append(mark)
-                self.marks = sorted(self.marks, key=itemgetter('start'))
+                self.state.marks.append(mark)
+                self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
                 self.markItr += 1
                 self.print_to_screen('saved')
                 self.write_state_information()
@@ -488,9 +499,9 @@ class MyApp(object):
             if self.current_mark:
                 sounds.error_sound(self.volume)
             else:
-                count = len(self.marks)
+                count = len(self.state.marks)
                 self.current_mark = Mark()
-                self.marks.append(self.current_mark)
+                self.state.marks.append(self.current_mark)
                 self.write_state_information()
                 self.print_to_screen('block {}.'.format(count+1))
         except Exception as ex:
@@ -504,10 +515,10 @@ class MyApp(object):
         # been entered
         if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
             self.current_mark.reset()
-            # self.marks.append(self.current_mark)
+            # self.state.marks.append(self.current_mark)
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
-            self.marks = sorted(self.marks, key=itemgetter('start'))
+            self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
             self.markItr += 1
             self.print_to_screen('saved')
             self.write_state_information()
@@ -520,7 +531,7 @@ class MyApp(object):
             okay = True
             # cycle through the saved marks and make sure the current position does
             # overlap with them
-            for each in self.marks:
+            for each in self.state.marks:
                 if each != self.current_mark:
                     if each.start <= begin_position_check <= each.end:
                         okay = False
@@ -543,7 +554,7 @@ class MyApp(object):
             okay = True
             # cycle through the saved marks and make sure the current position does
             # overlap with them
-            for each in self.marks:
+            for each in self.state.marks:
                 if each != self.current_mark:
                     if each.start <= begin_position_check <= each.end:
                         okay = False
@@ -562,7 +573,7 @@ class MyApp(object):
         """
         Method to check the blocks for any that did have the beginning or ending specified 
         """
-        self.marks = list(filter(lambda x : x.is_null() != True, self.marks))
+        self.state.marks = list(filter(lambda x : x.is_null() != True, self.state.marks))
         self.log('check_for_null_blocks')
 
     def applyEdits(self):
@@ -575,7 +586,7 @@ class MyApp(object):
         select = "select='"
         aselect = "aselect='"
         last = 0
-        for each in self.marks:
+        for each in self.state.marks:
             temp = each.end
             each.end = each.start
             each.start = last
@@ -583,8 +594,8 @@ class MyApp(object):
         n = Mark()
         n.start = last
         n.end = 1
-        self.marks.append(n)
-        for i, each in enumerate(self.marks):
+        self.state.marks.append(n)
+        for i, each in enumerate(self.state.marks):
             if i == 0:
                 select += """between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
@@ -615,11 +626,11 @@ class MyApp(object):
         return command,edited_file
 
     def cycleThroughMarks(self):
-        if len(self.marks) > self.markItr+1:
+        if len(self.state.marks) > self.markItr+1:
             self.markItr += 1
         else:
             self.markItr = 0
-        self.current_mark = self.marks[self.markItr]
+        self.current_mark = self.state.marks[self.markItr]
         self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
         self.print_to_screen('Block {}'.format(self.markItr + 1))
         time.sleep(0.25)
