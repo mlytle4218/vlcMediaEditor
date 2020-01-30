@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import math, sys, subprocess
+import math, sys, subprocess, syslog
 
 def milliseconds_to_hms(self, millis):
     millis = int(millis)
@@ -37,7 +37,7 @@ def get_file_length(input_file):
 
 def main():
     print('hi')
-    result = get_file_length(sys.argv[1])
+    # result = get_file_length(sys.argv[1])
     print(result)
 
 

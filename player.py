@@ -216,8 +216,13 @@ class MyApp(object):
 
                 # print the current time formatted to the screen
                 elif key == config.current_time:
-                    c_time = self.poll_thread.timeStamp(self.duration, self.song.get_position())
+                    c_time = self.poll_thread.timeStamp(self.state.duration, self.song.get_position())
                     self.print_to_screen(c_time)
+                    
+                # print the lenght of the file to the screen
+                elif key == config.file_length:
+                    length = self.poll_thread.timeStamp(self.state.duration, 1)
+                    self.print_to_screen(length)
 
                 # causes the playback to stop and allows user to enter a spcific 
                 # amount of time to move forward or backward

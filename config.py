@@ -41,6 +41,7 @@ begin_edits = ord('o')
 
 # Interface keys
 current_time = ord('t')
+file_length = ord('l')
 
 # volume controls
 volume_up = ord('u')
