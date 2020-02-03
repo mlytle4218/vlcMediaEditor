@@ -4,9 +4,9 @@ class Mark():
         the beginning of audio that will be removed and the position where the audio
         will begin again.
     """
-    def __init__(self):
-        self.start = -1
-        self.end = -1
+    def __init__(self, position=-1):
+        self.start = position
+        self.end = position
     
     def is_null(self):
         """

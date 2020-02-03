@@ -16,6 +16,7 @@ jump_specific = ord('j')
 
 # Block creation and editing
 mark_create_new = ord('n')
+cycle_through_marks_editing = ord('C')
 mark_save_current = ord('s')
 mark_record_start_position = ord('b')
 mark_record_end_position = ord('e')
