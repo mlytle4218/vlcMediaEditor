@@ -28,3 +28,13 @@ class Mark():
             temp = self.start
             self.start = self.end
             self.end = temp
+
+    def overlap(self, position):
+        """
+        Method to check if a position is overlaps with current mark
+
+        Arguments - position - float - the proposed position
+
+        Returns True if there is overlap and False if not
+        """
+        return self.start <= position <= self.end

@@ -38,7 +38,8 @@ def get_file_length(input_file):
 def main():
     print('hi')
     # result = get_file_length(sys.argv[1])
-    print(result)
+    # print(result)
+    syslog.syslog(syslog.LOG_INFO, "log_info")
 
 
 if __name__ == "__main__":

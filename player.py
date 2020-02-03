@@ -26,7 +26,7 @@ class MyApp(object):
         
         self.rate = 1
         self.position = 0
-        self.is_marking = False
+        self.is_editing = False
         self.state = State()
         self.markItr = 0
         self.current_mark = None
@@ -152,7 +152,8 @@ class MyApp(object):
 
                 # Create a new mark
                 elif key == config.mark_create_new:
-                    self.createNewMark()
+                    # self.createNewMark()
+                    pass
 
                 # Saves a current mark
                 elif key == config.mark_save_current:
@@ -218,7 +219,7 @@ class MyApp(object):
                 elif key == config.current_time:
                     c_time = self.poll_thread.timeStamp(self.state.duration, self.song.get_position())
                     self.print_to_screen(c_time)
-                    
+
                 # print the lenght of the file to the screen
                 elif key == config.file_length:
                     length = self.poll_thread.timeStamp(self.state.duration, 1)
@@ -544,6 +545,89 @@ class MyApp(object):
         else:
             sounds.error_sound(self.volume)
 
+    def saveCurrentMark_new(self):
+        """
+        Method checks that block is finished and if it is, save it and remove it from the current block.
+        """
+        if self.is_editing:
+            self.current_mark.reset()
+            self.current_mark = None
+            self.print_to_screen('saved')
+            self.write_state_information()
+        else:
+            sounds.error_sound(self.volume)
+            self.print_to_screen('not in edit mode')
+
+    def check_for_overlap(self, position, index=None):
+        """
+        Method to check if the proposed position for a new block beginning or 
+        ending position overlaps with another block
+
+        Arguments - position - float - the proposed position
+                    index - int - the index of existing marks array that we want
+                    to avoid.
+
+        Returns True if there is overlap with any block in marks array and False
+        if there is not - if an index is passe, it avoids that object as that is
+        the current object getting edited.
+        """
+        if index:
+            for i,mark in self.state.marks:
+                if i != index:
+                    if mark.overlap(position):
+                        return True
+                return False
+        else:
+            for mark in self.state.marks:
+                if mark.overlap(position):
+                    return True
+            return False
+
+    def startMarkPosition_new(self):
+        """
+        Method to mark the start position of a new block.
+
+        Starts by seeing if it is in edit mode. 
+
+        If it is in edit mode, it gets the index of the current mark and compares
+        the proposed new start against all the other marks to see if it overlaps
+        with any of them. If not, it updates the start position of the block.
+
+        If it is not in edit move, it checks to see if the proposed position 
+        overlaps with any of the other blocks. If it does not, it creates a new 
+        block and sets the start position at the current position
+        """
+        current_position = self.song.get_position()
+        count = len(self.state.marks)
+        try:
+            # is in edit mode
+            if self.is_editing:
+                current_mark_index = self.state.marks.index(self.current_mark)
+                # check if there is overlap with any other blocks error sound if there is
+                if self.check_for_overlap(current_position, index=current_mark_index):
+                    sounds.error_sound(self.volume)
+                    self.print_to_screen('overlap')
+                else:
+                    self.current_mark.start = current_position
+                    sounds.mark_start_sound(self.volume)
+                    self.print_to_screen('edited beginning of block {}'.format(count+1))
+                    self.write_state_information()
+            # is in new mode
+            else:
+                if self.check_for_overlap(current_position):
+                    sounds.error_sound(self.volume)
+                    self.print_to_screen('overlap')
+                else:
+                    self.current_mark = Mark()
+                    self.state.marks.append(self.current_mark)
+                    self.current_mark.start = current_position
+                    sounds.mark_start_sound(self.volume)
+                    self.print_to_screen('beginning block {}'.format(count+1))
+                    self.write_state_information()
+                    
+        except Exception as ex:
+            self.log(ex)
+
     def startMarkPosition(self):
         """
         Method to mark the start position of the current block.
@@ -569,6 +653,49 @@ class MyApp(object):
         else:
             self.log('no current_mark')
             sounds.error_sound(self.volume)
+
+    def endMarkPosition_new(self):
+        """
+        Method to mark the end position of an existing block.
+
+        Starts by seeing if it is in edit mode. 
+
+        If it is in edit mode, it gets the index of the current mark and compares
+        the proposed new end against all the other marks to see if it overlaps
+        with any of them. If not, it updates the end position of the block.
+
+        If it is not in edit move, it checks to see if the proposed position 
+        overlaps with any of the other blocks. If it does not, it sets the start
+        position at the current position
+        """
+        current_position = self.song.get_position()
+        count = len(self.state.marks)
+        try:
+            # is in edit mode
+            if self.is_editing:
+                current_mark_index = self.state.marks.index(self.current_mark)
+                # check if there is overlap with any other blocks error sound if there is
+                if self.check_for_overlap(current_position, index=current_mark_index):
+                    sounds.error_sound(self.volume)
+                    self.print_to_screen('overlap')
+                else:
+                    self.current_mark.end = current_position
+                    sounds.mark_end_sound(self.volume)
+                    self.print_to_screen('edited ending of block {}'.format(count+1))
+                    self.write_state_information()
+            # is in new mode
+            else:
+                if self.check_for_overlap(current_position):
+                    sounds.error_sound(self.volume)
+                    self.print_to_screen('overlap')
+                elif self.current_mark:
+                    self.current_mark.end = current_position
+                    sounds.mark_end_sound(self.volume)
+                    self.print_to_screen('ending block {}'.format(count+1))
+                    self.write_state_information()
+                    
+        except Exception as ex:
+            self.log(ex)
 
     def endMarkPosition(self):
         """
