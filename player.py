@@ -179,10 +179,18 @@ class MyApp(object):
                         self.log(ex)
 
                 # Starting the current markItr cycle through the saved marks
-                # when in a Mark it is editable
+                # This is only for listening
                 elif key == config.cycle_through_marks:
                     try:
                         self.cycleThroughMarks()
+                    except Exception as ex:
+                        self.log(ex)
+
+                # Starting with the current markItr cycle through the saved marks
+                # This is for editing
+                elif key == config.cycle_through_marks_editing:
+                    try:
+                        self.cycleThroughMarks(edit=True)
                     except Exception as ex:
                         self.log(ex)
 
@@ -399,7 +407,7 @@ class MyApp(object):
 
         Argument - mark - float - vlc's position number.
         """
-        return int(self.duration * mark)
+        return int(self.state.duration * mark)
 
     def print_to_screen(self, output):
         """
@@ -565,6 +573,7 @@ class MyApp(object):
             self.current_mark = None
             self.print_to_screen('saved')
             self.write_state_information()
+            self.is_editing = False
         else:
             sounds.error_sound(self.volume)
             self.print_to_screen('not in edit mode - saveCurrentMark()')
@@ -582,7 +591,9 @@ class MyApp(object):
         if there is not - if an index is passe, it avoids that object as that is
         the current object getting edited.
         """
+        self.log('check_for_overlap')
         if index:
+            self.log('if index')
             for i,mark in self.state.marks:
                 if i != index:
                     if mark.overlap(position):
@@ -692,10 +703,12 @@ class MyApp(object):
                 # im a little worried i have to keep reminding myself this.
                 current_mark_index = self.state.marks.index(self.current_mark)
                 # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(self.song.get_position(), index=current_mark_index):
+                self.log(self.markItr)
+                if self.check_for_overlap(self.song.get_position(), index=self.markItr):
+                # if self.check_for_overlap(self.song.get_position(), index=current_mark_index):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
-                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition()')
+                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition() - is_editing')
                 else:
                     self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
@@ -705,7 +718,7 @@ class MyApp(object):
             else:
                 if self.check_for_overlap(self.song.get_position()):
                     sounds.error_sound(self.volume)
-                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition()')
+                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition() - !is_editing')
                     self.print_to_screen('overlap')
                 elif self.current_mark:
                     self.current_mark.end = self.song.get_position()
@@ -801,17 +814,18 @@ class MyApp(object):
         self.log(command)
         return command,edited_file
 
-    def cycleThroughMarks(self):
+    def cycleThroughMarks(self, edit=False):
         """
         Method to move the playback through the existing blocks.
         """
+        self.current_mark = self.state.marks[self.markItr]
+        self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
+        self.print_to_screen('Block {}'.format(self.markItr + 1))
+        self.is_editing = edit
         if len(self.state.marks) > self.markItr+1:
             self.markItr += 1
         else:
             self.markItr = 0
-        self.current_mark = self.state.marks[self.markItr]
-        self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
-        self.print_to_screen('Block {}'.format(self.markItr + 1))
         time.sleep(0.25)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
