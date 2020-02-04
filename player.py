@@ -580,6 +580,8 @@ class MyApp(object):
             self.print_to_screen('not in edit mode - saveCurrentMark()')
 
     def check_for_overlap(self, position, index=None):
+        self.log('index=None')
+        self.log(index)
         """
         Method to check if the proposed position for a new block beginning or 
         ending position overlaps with another block
@@ -592,13 +594,14 @@ class MyApp(object):
         if there is not - if an index is passe, it avoids that object as that is
         the current object getting edited.
         """
-        if index:
+        if index is not None:
             for i,mark in enumerate(self.state.marks):
                 if i != index:
                     if mark.overlap(position):
                         return True
                 return False
         else:
+            self.log('check for overlap no index')
             for mark in self.state.marks:
                 if mark.overlap(position):
                     return True
@@ -623,6 +626,10 @@ class MyApp(object):
             if self.is_editing:
                 # check if there is overlap with any other blocks error sound if there is
                 # self.log(self.markItr)
+                self.log('self.blockItrPrev')
+                self.log(self.blockItrPrev)
+                self.log('self.markItr')
+                self.log(self.markItr)
                 if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
