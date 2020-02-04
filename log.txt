@@ -1,2 +1,108 @@
 2020-02-03 16:17:08 - self.state.duration
 2020-02-03 16:17:08 - 337000
+2020-02-03 16:42:42 - self.state.duration
+2020-02-03 16:42:42 - 337000
+2020-02-03 16:42:43 - current blocks
+2020-02-03 16:42:43 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:42:47 - current blocks
+2020-02-03 16:42:47 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:42:48 - current blocks
+2020-02-03 16:42:48 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:42:48 - current blocks
+2020-02-03 16:42:48 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:42:48 - current blocks
+2020-02-03 16:42:48 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:42:48 - current blocks
+2020-02-03 16:42:48 - 0.037060197442770004:0.05550128594040871
+2020-02-03 16:44:16 - self.state.duration
+2020-02-03 16:44:16 - 337000
+2020-02-03 16:44:21 - 0.031124629080118694
+2020-02-03 16:44:36 - No file found
+2020-02-03 16:44:37 - 337000
+2020-02-03 16:45:12 - No file found
+2020-02-03 16:45:13 - 337000
+2020-02-03 16:45:29 - No file found
+2020-02-03 16:45:31 - 337000
+2020-02-03 16:45:52 - No file found
+2020-02-03 16:45:53 - 337000
+2020-02-03 16:47:33 - No file found
+2020-02-03 16:47:34 - 337000
+2020-02-03 16:47:35 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:43 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:43 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:45 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:45 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:45 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:46 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:46 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:46 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:47 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:47 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:48 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:48 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:49 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:49 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:49 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:49 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:49 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:50 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:51 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:52 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:53 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:53 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:53 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:53 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:53 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:54 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:54 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:54 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:54 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:47:54 - 'MyApp' object has no attribute 'duration'
+2020-02-03 16:50:15 - No file found
+2020-02-03 16:50:16 - 337000
+2020-02-03 16:50:18 - 0.018816023738872402
+2020-02-03 16:50:19 - 0.036112759643916914
+2020-02-03 16:50:20 - 0.05264688427299703
+2020-02-03 16:50:20 - 0.03951038575667656
+2020-02-03 16:50:21 - 0.02561127596439169
+2020-02-03 16:50:21 - 0.010774480712166173
+2020-02-03 16:50:21 - -0.004062314540059347
+2020-02-03 16:50:22 - 0.016456973293768547
+2020-02-03 16:50:22 - 0.03223145400593472
+2020-02-03 16:50:23 - 0.04800593471810089
+2020-02-03 16:50:23 - 0.064540059347181
+2020-02-03 16:50:24 - 0.0802373887240356
+2020-02-03 16:50:24 - 0.09696439169139466
+2020-02-03 16:50:25 - 0.08382492581602374
+2020-02-03 16:50:25 - 0.06898813056379823
+2020-02-03 16:50:25 - 0.0541513353115727
+2020-02-03 16:50:26 - 0.03931454005934718
+2020-02-03 16:50:26 - 0.05585163204747774
+2020-02-03 16:50:27 - 0.07068842729970326
+2020-02-03 16:50:27 - 0.08552522255192878
+2020-02-03 16:50:27 - 0.1003620178041543
+2020-02-03 16:50:27 - 0.11519881305637983
+2020-02-03 16:50:27 - 0.13003560830860533

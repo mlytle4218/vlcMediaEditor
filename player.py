@@ -685,29 +685,30 @@ class MyApp(object):
         overlaps with any of the other blocks. If it does not, it sets the start
         position at the current position
         """
-        current_position = self.song.get_position()
         try:
             # is in edit mode
             if self.is_editing:
+                # i keep forgetting this -  the index here finds the index for the current mark
+                # im a little worried i have to keep reminding myself this.
                 current_mark_index = self.state.marks.index(self.current_mark)
                 # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(current_position, index=current_mark_index):
+                if self.check_for_overlap(self.song.get_position(), index=current_mark_index):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
                     self.log('tried to create a block that overlaps another exisitng block - endMarkPosition()')
                 else:
-                    self.current_mark.end = current_position
+                    self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
                     self.print_to_screen('edited ending of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
-                if self.check_for_overlap(current_position):
+                if self.check_for_overlap(self.song.get_position()):
                     sounds.error_sound(self.volume)
                     self.log('tried to create a block that overlaps another exisitng block - endMarkPosition()')
                     self.print_to_screen('overlap')
                 elif self.current_mark:
-                    self.current_mark.end = current_position
+                    self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
                     self.print_to_screen('ending block {}'.format(len(self.state.marks)))
                     self.write_state_information()
@@ -823,27 +824,30 @@ class MyApp(object):
         curr_postion - float - the vlc position marker - this is a value between 
         0 and 1.
         """
-        cur_sec = round(cur_pos * self.duration) + (sec_offset * 1000)
-        new_pos = cur_sec / self.duration
-        self.log(new_pos)
-        if sec_offset < 0:
-            if new_pos < 0:
-                new_pos = 0
-                # print out remaining time instead of jumping to end
-                left = self.poll_thread.timeStamp(self.duration, self.song.get_position())
-                # self.window.addstr(0,0,"the most you can jump backwards is " + left)
-                self.print_to_screen('the most you can jump backwoards is {}'.format(left))
-                # return None
-        else:
-            if new_pos > 1:
-                new_pos = 1
-                # print out remaining time instead of jumping to end
-                left = self.poll_thread.timeStamp(self.duration, 1 - self.song.get_position())
-                self.print_to_screen('the most you can jump forwards is {}'.format(left))
-                # self.window.addstr(0,0,"the most you can jump forward is " + left)
-                # return None
-        self.song.set_position(new_pos)
-        self.song.play()
+        try:
+            cur_sec = round(cur_pos * self.state.duration) + (sec_offset * 1000)
+            new_pos = cur_sec / self.state.duration
+            self.log(new_pos)
+            if sec_offset < 0:
+                if new_pos < 0:
+                    new_pos = 0
+                    # print out remaining time instead of jumping to end
+                    left = self.poll_thread.timeStamp(self.state.duration, self.song.get_position())
+                    # self.window.addstr(0,0,"the most you can jump backwards is " + left)
+                    self.print_to_screen('the most you can jump backwoards is {}'.format(left))
+                    # return None
+            else:
+                if new_pos > 1:
+                    new_pos = 1
+                    # print out remaining time instead of jumping to end
+                    left = self.poll_thread.timeStamp(self.state.duration, 1 - self.song.get_position())
+                    self.print_to_screen('the most you can jump forwards is {}'.format(left))
+                    # self.window.addstr(0,0,"the most you can jump forward is " + left)
+                    # return None
+            self.song.set_position(new_pos)
+            self.song.play()
+        except Exception as ex:
+            self.log(ex)
 
 
 
