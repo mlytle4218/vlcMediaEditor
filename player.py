@@ -30,6 +30,7 @@ class MyApp(object):
         self.is_editing = False
         self.state = State()
         self.markItr = 0
+        self.blockItrPrev = -1
         self.current_mark = None
         self.volume = config.volume
         self.applyEditsBoolean = False
@@ -591,10 +592,8 @@ class MyApp(object):
         if there is not - if an index is passe, it avoids that object as that is
         the current object getting edited.
         """
-        self.log('check_for_overlap')
         if index:
-            self.log('if index')
-            for i,mark in self.state.marks:
+            for i,mark in enumerate(self.state.marks):
                 if i != index:
                     if mark.overlap(position):
                         return True
@@ -619,36 +618,29 @@ class MyApp(object):
         overlaps with any of the other blocks. If it does not, it creates a new 
         block and sets the start position at the current position
         """
-        current_position = self.song.get_position()
         try:
             # is in edit mode
             if self.is_editing:
-                self.log('is_editing')
-                current_mark_index = self.state.marks.index(self.current_mark)
                 # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(current_position, index=current_mark_index):
+                # self.log(self.markItr)
+                if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
-                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition()')
+                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition() - is_editing')
                 else:
-                    self.current_mark.start = current_position
+                    self.current_mark.start = self.song.get_position()
                     sounds.mark_start_sound(self.volume)
                     self.print_to_screen('edited beginning of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
-                self.log('!is_editing')
-                if self.check_for_overlap(current_position):
+                if self.check_for_overlap(self.song.get_position()):
                     sounds.error_sound(self.volume)
-                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition()')
+                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition() - !is_editing')
                     self.print_to_screen('overlap')
                 else:
-                    self.log('!overlap')
                     self.current_mark = Mark(position=self.song.get_position())
                     self.state.marks.append(self.current_mark)
-                    self.log('in !overlap')
-                    self.log(self.state.marks)
-                    # self.current_mark.start = current_position
                     sounds.mark_start_sound(self.volume)
                     self.print_to_screen('beginning block {}'.format(len(self.state.marks)))
                     self.write_state_information()
@@ -699,13 +691,8 @@ class MyApp(object):
         try:
             # is in edit mode
             if self.is_editing:
-                # i keep forgetting this -  the index here finds the index for the current mark
-                # im a little worried i have to keep reminding myself this.
-                current_mark_index = self.state.marks.index(self.current_mark)
                 # check if there is overlap with any other blocks error sound if there is
-                self.log(self.markItr)
-                if self.check_for_overlap(self.song.get_position(), index=self.markItr):
-                # if self.check_for_overlap(self.song.get_position(), index=current_mark_index):
+                if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
                     self.log('tried to create a block that overlaps another exisitng block - endMarkPosition() - is_editing')
@@ -818,13 +805,16 @@ class MyApp(object):
         """
         Method to move the playback through the existing blocks.
         """
+        self.log(self.markItr)
         self.current_mark = self.state.marks[self.markItr]
         self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
         self.print_to_screen('Block {}'.format(self.markItr + 1))
         self.is_editing = edit
         if len(self.state.marks) > self.markItr+1:
+            self.blockItrPrev = self.markItr
             self.markItr += 1
         else:
+            self.blockItrPrev = self.markItr
             self.markItr = 0
         time.sleep(0.25)
 
