@@ -18,7 +18,7 @@ class WorkerThread(threading.Thread):
         self.last = 0
 
         self.current = 0
-        self.difference = 0
+        self.difference = 0.00025
 
     def log(self, input):
         input = str(input)
@@ -41,7 +41,9 @@ class WorkerThread(threading.Thread):
                 try:
                     # cnt = 0
                     for each in self.song.state.marks:
-                        if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
+                        if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
+                        # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
+                            self.log('start')
                             sounds.mark_start_sound(self.song.volume)
 
                         if each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):

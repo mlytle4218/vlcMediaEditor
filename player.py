@@ -79,10 +79,8 @@ class MyApp(object):
         print('loading file')
         try:
             if self.state.duration:
-                self.log('self.state.duration')
                 self.duration = self.state.duration
             else:
-                self.log('self')
                 self.duration = self.get_file_length(self.original_file)
                 self.state.duration = self.duration
                 self.write_state_information()
@@ -93,7 +91,7 @@ class MyApp(object):
             quick_state.duration = self.get_file_length(self.original_file)
             self.state = quick_state
 
-        self.log(self.state.duration)
+
         self.song.play()
         self.media.parse()
         self.poll_thread = WorkerThread(self)
@@ -625,11 +623,6 @@ class MyApp(object):
             # is in edit mode
             if self.is_editing:
                 # check if there is overlap with any other blocks error sound if there is
-                # self.log(self.markItr)
-                self.log('self.blockItrPrev')
-                self.log(self.blockItrPrev)
-                self.log('self.markItr')
-                self.log(self.markItr)
                 if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
