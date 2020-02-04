@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
-import math, sys, subprocess, syslog
+import math, sys, subprocess, syslog, pickle
+
+
+class State():
+    marks = []
+    duration  = 0 
 
 def milliseconds_to_hms(self, millis):
     millis = int(millis)
@@ -35,11 +40,27 @@ def get_file_length(input_file):
     return time
 
 
+def read_state_information(state_file):
+    """
+    Method to read the saved information about a file from a file named like
+    the original with a .state extension
+    """
+    try:
+        state = open(state_file, 'rb')
+        out = pickle.load(state)
+        for each in out.marks:
+            print("{} to {}".format(each.start, each.end))
+    except IOError:
+       print("No file found")
+
+
 def main():
     print('hi')
     # result = get_file_length(sys.argv[1])
     # print(result)
-    syslog.syslog(syslog.LOG_INFO, "log_info")
+    # syslog.syslog(syslog.LOG_INFO, "log_info")
+    read_state_information(sys.argv[1])
+
 
 
 if __name__ == "__main__":

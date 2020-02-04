@@ -17,8 +17,9 @@ from mark import Mark
 from workerThread import WorkerThread
 
 class State():
-    marks = []
-    duration  = 0 
+    def __init__(self):
+        marks = []
+        duration  = 0 
 
 class MyApp(object):
 
@@ -86,7 +87,8 @@ class MyApp(object):
                 self.write_state_information()
         except Exception:
             quick_state = State()
-            quick_state.marks = self.state
+            quick_state.marks = []
+            # quick_state.marks = self.state
             quick_state.duration = self.get_file_length(self.original_file)
             self.state = quick_state
 
@@ -349,8 +351,9 @@ class MyApp(object):
         try:
             if self.current_mark:
                 sounds.error_sound(self.volume)
+                self.log('tried to use B or E while an existing block was current')
             else:
-                mark = Mark()
+                mark = Mark(position=self.song.get_position())
                 if start:
                     mark.start = 0
                     mark.end = self.song.get_position()
@@ -520,14 +523,18 @@ class MyApp(object):
                 sounds.error_sound(self.volume)
             else:
                 count = len(self.state.marks)
-                self.current_mark = Mark()
+                self.current_mark = Mark(position=self.song.get_position())
                 self.state.marks.append(self.current_mark)
+                # self.log(len(self.state.marks))
+                # self.log(self.state.marks)
+                # self.log(self.state.duration)
+                # self.log(self.state.marks[0])
                 self.write_state_information()
                 self.print_to_screen('block {}.'.format(count+1))
         except Exception as ex:
             self.log(ex)
 
-    def saveCurrentMark(self):
+    def saveCurrentMark_old(self):
         """
         Method checks that block is finished and if it is, save it and remove it from the current block.
         """
@@ -545,7 +552,7 @@ class MyApp(object):
         else:
             sounds.error_sound(self.volume)
 
-    def saveCurrentMark_new(self):
+    def saveCurrentMark(self):
         """
         Method checks that block is finished and if it is, save it and remove it from the current block.
         """
@@ -583,7 +590,7 @@ class MyApp(object):
                     return True
             return False
 
-    def startMarkPosition_new(self):
+    def startMarkPosition(self):
         """
         Method to mark the start position of a new block.
 
@@ -602,6 +609,7 @@ class MyApp(object):
         try:
             # is in edit mode
             if self.is_editing:
+                self.log('is_editing')
                 current_mark_index = self.state.marks.index(self.current_mark)
                 # check if there is overlap with any other blocks error sound if there is
                 if self.check_for_overlap(current_position, index=current_mark_index):
@@ -610,25 +618,30 @@ class MyApp(object):
                 else:
                     self.current_mark.start = current_position
                     sounds.mark_start_sound(self.volume)
-                    self.print_to_screen('edited beginning of block {}'.format(count+1))
+                    self.print_to_screen('edited beginning of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
+                self.log('!is_editing')
                 if self.check_for_overlap(current_position):
+                    self.log('overlap')
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
                 else:
-                    self.current_mark = Mark()
+                    self.log('!overlap')
+                    self.current_mark = Mark(position=self.song.get_position())
                     self.state.marks.append(self.current_mark)
-                    self.current_mark.start = current_position
+                    self.log('in !overlap')
+                    self.log(self.state.marks)
+                    # self.current_mark.start = current_position
                     sounds.mark_start_sound(self.volume)
-                    self.print_to_screen('beginning block {}'.format(count+1))
+                    self.print_to_screen('beginning block {}'.format(len(self.state.marks)))
                     self.write_state_information()
                     
         except Exception as ex:
             self.log(ex)
 
-    def startMarkPosition(self):
+    def startMarkPosition_old(self):
         """
         Method to mark the start position of the current block.
         """
@@ -654,7 +667,7 @@ class MyApp(object):
             self.log('no current_mark')
             sounds.error_sound(self.volume)
 
-    def endMarkPosition_new(self):
+    def endMarkPosition(self):
         """
         Method to mark the end position of an existing block.
 
@@ -681,7 +694,7 @@ class MyApp(object):
                 else:
                     self.current_mark.end = current_position
                     sounds.mark_end_sound(self.volume)
-                    self.print_to_screen('edited ending of block {}'.format(count+1))
+                    self.print_to_screen('edited ending of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
@@ -691,13 +704,13 @@ class MyApp(object):
                 elif self.current_mark:
                     self.current_mark.end = current_position
                     sounds.mark_end_sound(self.volume)
-                    self.print_to_screen('ending block {}'.format(count+1))
+                    self.print_to_screen('ending block {}'.format(len(self.state.marks)))
                     self.write_state_information()
                     
         except Exception as ex:
             self.log(ex)
 
-    def endMarkPosition(self):
+    def endMarkPosition_old(self):
         """
         Method to mark the end position of the current block.
         """
@@ -746,7 +759,7 @@ class MyApp(object):
             each.end = each.start
             each.start = last
             last = temp
-        n = Mark()
+        n = Mark(position=self.song.get_position())
         n.start = last
         n.end = 1
         self.state.marks.append(n)
@@ -824,6 +837,7 @@ class MyApp(object):
                 # return None
         self.song.set_position(new_pos)
         self.song.play()
+
 
 
 def printHelp():
