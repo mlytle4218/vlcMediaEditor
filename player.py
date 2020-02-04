@@ -517,6 +517,8 @@ class MyApp(object):
     def createNewMark(self):
         """ 
         Method to create a new block and set it to current.
+
+        defunct
         """
         try:
             if self.current_mark:
@@ -607,7 +609,6 @@ class MyApp(object):
         block and sets the start position at the current position
         """
         current_position = self.song.get_position()
-        count = len(self.state.marks)
         try:
             # is in edit mode
             if self.is_editing:
@@ -685,7 +686,6 @@ class MyApp(object):
         position at the current position
         """
         current_position = self.song.get_position()
-        count = len(self.state.marks)
         try:
             # is in edit mode
             if self.is_editing:
