@@ -78,16 +78,13 @@ class MyApp(object):
         
         print('loading file')
         try:
-            if self.state.duration:
-                self.duration = self.state.duration
-            else:
-                self.duration = self.get_file_length(self.original_file)
-                self.state.duration = self.duration
+            if not self.state.duration:
+                self.state.duration = self.get_file_length(self.original_file)
                 self.write_state_information()
+            self.log("file duration: {}".format(self.state.duration))
         except Exception:
             quick_state = State()
             quick_state.marks = []
-            # quick_state.marks = self.state
             quick_state.duration = self.get_file_length(self.original_file)
             self.state = quick_state
 
@@ -259,7 +256,7 @@ class MyApp(object):
                 elif key == config.list_marks:
                     self.log('current blocks')
                     for mark in self.state.marks:
-                        self.log(mark)
+                        self.log(mark.get_time(self.state.duration))
         except KeyboardInterrupt:
             pass
 
@@ -338,17 +335,23 @@ class MyApp(object):
         """
         Method to remove block from self.state.marks
         """
-        if self.current_mark:
-            self.log(self.markItr)
-            self.log(len(self.state.marks))
-            self.state.marks.pop(self.markItr)
-            self.log(len(self.state.marks))
-            if self.markItr > 0:
-                self.markItr -= 1
-            self.print_to_screen('Block deleted')
-            self.write_state_information()
+        try:
+            if self.is_editing and self.current_mark:
+                self.state.marks.pop(self.blockItrPrev)
+                if self.markItr > len(self.state.marks):
+                    self.markItr = 0
+                if self.markItr == 0:
+                    self.blockItrPrev = len(self.state.marks)
+                else:
+                    self.blockItrPrev = self.markItr - 1
+                self.print_to_screen('Block deleted')
+                self.current_mark = None
+                self.write_state_information()
+        except Exception as ex:
+            self.log(ex)
 
     def begining_ending_block(self, start):
+        self.log(self.current_mark)
         """
         Method to make a block starting from the begining of the file to the current position or from the current position to the end of the file
 
@@ -359,6 +362,7 @@ class MyApp(object):
             if self.current_mark:
                 sounds.error_sound(self.volume)
                 self.log('tried to use B or E while an existing block was current - beginning_ending_block()')
+                self.print_to_screen('Overlap with exsiting block')
             else:
                 mark = Mark(position=self.song.get_position())
                 if start:
@@ -710,6 +714,7 @@ class MyApp(object):
                 elif self.current_mark:
                     self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
+                    self.current_mark = None
                     self.print_to_screen('ending block {}'.format(len(self.state.marks)))
                     self.write_state_information()
                     
@@ -806,8 +811,9 @@ class MyApp(object):
         Method to move the playback through the existing blocks.
         """
         self.log(self.markItr)
-        self.current_mark = self.state.marks[self.markItr]
-        self.changePositionBySecondOffset(config.preview_time, self.current_mark.start)
+        if edit:
+            self.current_mark = self.state.marks[self.markItr]
+        self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].start)
         self.print_to_screen('Block {}'.format(self.markItr + 1))
         self.is_editing = edit
         if len(self.state.marks) > self.markItr+1:
@@ -816,7 +822,7 @@ class MyApp(object):
         else:
             self.blockItrPrev = self.markItr
             self.markItr = 0
-        time.sleep(0.25)
+        # time.sleep(0.25)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
         """

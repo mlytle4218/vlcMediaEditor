@@ -58,8 +58,9 @@ def main():
     print('hi')
     # result = get_file_length(sys.argv[1])
     # print(result)
-    # syslog.syslog(syslog.LOG_INFO, "log_info")
-    read_state_information(sys.argv[1])
+    syslog.syslog(syslog.LOG_INFO, "log_info")
+    # read_state_information(sys.argv[1])
+
 
 
 

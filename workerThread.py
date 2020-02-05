@@ -5,6 +5,7 @@ import threading
 import sounds
 
 class WorkerThread(threading.Thread):
+    # differences = []
     """
     A worker thread that polls the vlc api for current position and calls options as necessary
 
@@ -37,16 +38,19 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
+                # self.differences.append(self.current - self.last)
                 # self.log('bob')
                 try:
                     # cnt = 0
                     for each in self.song.state.marks:
-                        if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
+                        if abs(self.current- self.last) < self.difference and self.last <= each.start <= self.current:
+                        # if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
                         # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
-                            self.log('start')
+                            self.log('mark_start_sound')
                             sounds.mark_start_sound(self.song.volume)
 
-                        if each.end > (self.current - (self.difference)) and each.end < (self.current + (self.difference)):
+                        if abs(self.current- self.last) < self.difference and self.last <= each.end <= self.current:
+                        # if (self.current - (self.difference)) < each.end < (self.current + (self.difference)):
                             sounds.mark_end_sound(self.song.volume)
 
                     # update the difference - this is a 'magic' number to give leaway to testing to each
@@ -80,5 +84,7 @@ class WorkerThread(threading.Thread):
 
     # used to shut down the worker thread
     def join(self, timeout=None):
+        # average = sum(self.differences) / len(self.differences)
+        # self.log(average)
         self.stoprequest.set()
         super(WorkerThread, self).join(timeout)

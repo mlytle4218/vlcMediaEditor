@@ -7,6 +7,26 @@ class Mark():
     def __init__(self, position=-1):
         self.start = position
         self.end = position
+
+    def timeStamp(self,duration,current):
+        out = duration * current
+        millis = int(out)
+        seconds = round((millis/1000) % 60, 3)
+        minutes = (millis/(1000*60)) % 60
+        minutes = int(minutes)
+        hours = int((millis/(1000*60*60)) % 24)
+        time = ""
+        if hours >= 1:
+            time = "{} hours ".format(hours)
+        if minutes >= 1:
+            time += "{} minutes ".format(minutes)
+        if seconds >= 1:
+            time  += "{} seconds".format(seconds)
+        return time
+
+    def get_time(self, duration):
+        return self.timeStamp(duration, self.start) + " - " + self.timeStamp(duration, self.end)
+        
     
     def is_null(self):
         """
