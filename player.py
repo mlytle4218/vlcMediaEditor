@@ -34,6 +34,7 @@ class MyApp(object):
         self.current_mark = None
         self.volume = config.volume
         self.applyEditsBoolean = False
+        self.cycle_start = True
 
         self.screen = stdscreen
 
@@ -810,20 +811,32 @@ class MyApp(object):
     def cycleThroughMarks(self, edit=False):
         """
         Method to move the playback through the existing blocks.
+
+        Arguments:
+        edit - boolean - True if the intent is to edit the blocks and False if 
+        not. Default is False
         """
-        self.log(self.markItr)
+
+        self.is_editing = edit
         if edit:
             self.current_mark = self.state.marks[self.markItr]
-        self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].start)
-        self.print_to_screen('Block {}'.format(self.markItr + 1))
-        self.is_editing = edit
+        if self.cycle_start:
+            self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].start)
+            self.cycle_start = False
+            self.print_to_screen('Block {} start'.format(self.markItr))
+        else:
+            self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].end)
+            self.cycle_start = True
+            self.print_to_screen('Block {} end'.format(self.markItr))
+            self.updateIters()
+
+    def updateIters(self):
         if len(self.state.marks) > self.markItr+1:
             self.blockItrPrev = self.markItr
             self.markItr += 1
         else:
             self.blockItrPrev = self.markItr
             self.markItr = 0
-        # time.sleep(0.25)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
         """
