@@ -51,7 +51,7 @@ class Mark():
 
     def overlap(self, position):
         """
-        Method to check if a position is overlaps with current mark
+        Method to check if a position overlaps with current mark
 
         Arguments - position - float - the proposed position
 

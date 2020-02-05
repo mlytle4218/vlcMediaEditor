@@ -351,7 +351,6 @@ class MyApp(object):
             self.log(ex)
 
     def begining_ending_block(self, start):
-        self.log(self.current_mark)
         """
         Method to make a block starting from the begining of the file to the current position or from the current position to the end of the file
 
@@ -362,20 +361,24 @@ class MyApp(object):
             if self.current_mark:
                 sounds.error_sound(self.volume)
                 self.log('tried to use B or E while an existing block was current - beginning_ending_block()')
-                self.print_to_screen('Overlap with exsiting block')
+                self.print_to_screen('Overlap with an existing block')
             else:
                 mark = Mark(position=self.song.get_position())
-                if start:
-                    mark.start = 0
-                    mark.end = self.song.get_position()
+                if not self.check_for_overlap(self.song.get_position()):
+                    if start:
+                        mark.start = 0
+                        mark.end = self.song.get_position()
+                    else:
+                        mark.start = self.song.get_position()
+                        mark.end = 1
+                    self.state.marks.append(mark)
+                    self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
+                    self.markItr += 1
+                    self.print_to_screen('saved')
+                    self.write_state_information()
                 else:
-                    mark.start = self.song.get_position()
-                    mark.end = 1
-                self.state.marks.append(mark)
-                self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
-                self.markItr += 1
-                self.print_to_screen('saved')
-                self.write_state_information()
+                    self.log('Tried to use B or E and found an overlap with exisitng block')
+                    self.print_to_screen('Overlap with an existing block')
         except Exception as ex:
             self.log(ex)
 
@@ -582,8 +585,6 @@ class MyApp(object):
             self.print_to_screen('not in edit mode - saveCurrentMark()')
 
     def check_for_overlap(self, position, index=None):
-        self.log('index=None')
-        self.log(index)
         """
         Method to check if the proposed position for a new block beginning or 
         ending position overlaps with another block
@@ -593,7 +594,7 @@ class MyApp(object):
                     to avoid.
 
         Returns True if there is overlap with any block in marks array and False
-        if there is not - if an index is passe, it avoids that object as that is
+        if there is not - if an index is passed, it avoids that object as that is
         the current object getting edited.
         """
         if index is not None:
