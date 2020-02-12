@@ -1,7 +1,6 @@
+#!/usr/bin/env python3 
 import generate_tone
 import config
-
-gt = generate_tone.Generator()
 
 def error_sound(_volume=1):
     notes=[]
@@ -51,3 +50,8 @@ def mark_end_sound(_volume=1):
         ))
     gt.generate_tone(notes, volume=_volume)
 
+
+if __name__ == "__main__":
+    gt = generate_tone.Generator()
+    mark_start_sound()
+    

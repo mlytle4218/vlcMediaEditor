@@ -59,7 +59,7 @@ class WorkerThread(threading.Thread):
                     # to a algorith relative to the length of the file.
 
                     self.last = self.current
-                    self.song.window.refresh()
+                    # self.song.window.refresh()
                 except Exception as e:
                     self.log(e)
 
