@@ -19,7 +19,7 @@ class WorkerThread(threading.Thread):
         self.last = 0
 
         self.current = 0
-        self.difference = 0.00025
+        self.difference = 0.0025
 
     def log(self, input):
         input = str(input)
@@ -38,21 +38,39 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
-                # self.differences.append(self.current - self.last)
-                # self.log('bob')
                 try:
                     # cnt = 0
                     for each in self.song.state.marks:
-                        if abs(self.current- self.last) < self.difference and self.last <= each.start <= self.current:
-                        # if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
-                        # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
-                            self.log('mark_start_sound')
-                            self.log(self.current)
-                            sounds.mark_start_sound(self.song.volume)
+                        if abs(self.current- self.last) < self.difference : 
+                            if self.last <= each.start <= self.current:
+                                sounds.mark_start_sound(self.song.volume)
+                            elif self.last <= each.end <= self.current:
+                                sounds.mark_end_sound(self.song.volume)
 
-                        if abs(self.current- self.last) < self.difference and self.last <= each.end <= self.current:
-                        # if (self.current - (self.difference)) < each.end < (self.current + (self.difference)):
-                            sounds.mark_end_sound(self.song.volume)
+
+
+
+
+
+
+
+                        # if abs(self.current- self.last) < self.difference and self.last <= each.start <= self.current:
+                        # # if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
+                        # # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
+                        #     # self.log(self.song.song)
+                        #     self.log('start_sound')
+                        #     self.log(abs(self.current - self.last))
+                        #     self.song.song.pause()
+                        #     sounds.mark_start_sound(self.song.volume)
+                        #     self.song.song.play()
+
+                        # if abs(self.current- self.last) < self.difference and self.last <= each.end <= self.current:
+                        # # if (self.current - (self.difference)) < each.end < (self.current + (self.difference)):
+                        #     self.log('end_sound')
+                        #     # self.log(self.current)
+                        #     self.log(abs(self.current - self.last))
+                        #     # self.log(self.last)
+                        #     sounds.mark_end_sound(self.song.volume)
 
                     # update the difference - this is a 'magic' number to give leaway to testing to each
                     # mark relative to the current time. because there could be variation between the polled
