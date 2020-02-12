@@ -58,3 +58,30 @@ class Mark():
         Returns True if there is overlap and False if not
         """
         return self.start <= position <= self.end
+
+
+    # def sortMarks(self):
+    #     """
+    #     Method to sort the marks into time displacement order. ie - if you have 
+    #     two marks and add a third between the first and second, it makes the reorders
+    #     the list to put it in the middle for cycling
+    #     """
+    #     pass
+
+    def __eq__(self, other):
+        return (self.start == other.start)
+
+    def __ne__(self, other):
+        return (self.start != other.start)
+
+    def __lt__(self, other):
+        return (self.start < other.start)
+
+    def __le__(self, other):
+        return (self.start <= other.start)
+
+    def __gt__(self, other):
+        return (self.start > other.start)
+
+    def __ge__(self, other):
+        return (self.start >= other.start)

@@ -337,7 +337,10 @@ class MyApp(object):
         Method to remove block from self.state.marks
         """
         try:
+            self.log(self.is_editing)
+            self.log(self.current_mark)
             if self.is_editing and self.current_mark:
+                self.log('deleting')
                 self.state.marks.pop(self.blockItrPrev)
                 if self.markItr > len(self.state.marks):
                     self.markItr = 0
@@ -718,6 +721,7 @@ class MyApp(object):
                     sounds.mark_end_sound(self.volume)
                     self.current_mark = None
                     self.print_to_screen('ending block {}'.format(len(self.state.marks)))
+                    self.state.marks.sort()
                     self.write_state_information()
                     
         except Exception as ex:
@@ -823,11 +827,11 @@ class MyApp(object):
         if self.cycle_start:
             self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].start)
             self.cycle_start = False
-            self.print_to_screen('Block {} start'.format(self.markItr))
+            self.print_to_screen('Block {} start'.format(self.markItr+1))
         else:
             self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].end)
             self.cycle_start = True
-            self.print_to_screen('Block {} end'.format(self.markItr))
+            self.print_to_screen('Block {} end'.format(self.markItr+1))
             self.updateIters()
 
     def updateIters(self):

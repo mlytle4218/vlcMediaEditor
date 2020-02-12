@@ -47,6 +47,7 @@ class WorkerThread(threading.Thread):
                         # if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
                         # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
                             self.log('mark_start_sound')
+                            self.log(self.current)
                             sounds.mark_start_sound(self.song.volume)
 
                         if abs(self.current- self.last) < self.difference and self.last <= each.end <= self.current:

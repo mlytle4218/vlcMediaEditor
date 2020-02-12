@@ -37,7 +37,8 @@ nudge_ending_right = 'Function 4'
 
 
 # Quitting and applying edits
-quit_program = 'q'# ord('q')
+quit_program = ord('q')
+# quit_program = 'q'
 begin_edits = ord('o')
 
 # Interface keys

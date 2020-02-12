@@ -3,6 +3,7 @@ import generate_tone
 import config
 
 def error_sound(_volume=1):
+    gt = generate_tone.Generator()
     notes=[]
     frequency = 400.0
     time = 0.3
@@ -18,6 +19,7 @@ def error_sound(_volume=1):
 
 
 def mark_start_sound(_volume=1):
+    gt = generate_tone.Generator()
     notes = []
     frequency = 400.0
     time = 0.3
@@ -36,6 +38,7 @@ def mark_start_sound(_volume=1):
 
 
 def mark_end_sound(_volume=1):
+    gt = generate_tone.Generator()
     notes= []
     frequency = 400.0
     time = 0.3
@@ -52,6 +55,5 @@ def mark_end_sound(_volume=1):
 
 
 if __name__ == "__main__":
-    gt = generate_tone.Generator()
     mark_start_sound()
     
