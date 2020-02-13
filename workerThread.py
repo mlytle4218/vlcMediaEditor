@@ -44,10 +44,13 @@ class WorkerThread(threading.Thread):
                             if self.last <= each.start <= self.current:
                                 self.song.song.pause()
                                 time.sleep(1)
-                                sounds.mark_start_sound(self.song.volume)
+                                # sounds.mark_start_sound(self.song.volume)
                                 self.song.song.play()
                             elif self.last <= each.end <= self.current:
-                                sounds.mark_end_sound(self.song.volume)
+                                # sounds.mark_end_sound(self.song.volume)
+                                self.song.song.pause()
+                                time.sleep(1)
+                                self.song.song.play()
 
 
 
