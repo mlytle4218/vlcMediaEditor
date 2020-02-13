@@ -293,6 +293,7 @@ class MyApp(object):
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
+        curses.endwin()
 
     def nudgeBeginningOrEnding(self):
         """

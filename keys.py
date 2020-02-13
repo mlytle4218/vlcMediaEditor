@@ -24,6 +24,15 @@ def run():
             print("Stop!")
             exit(0)
 
+        elif char=='\x1b[A':
+                print("up")
+        elif char=='\x1b[B':
+                print("down")
+        elif char=='\x1b[C':
+                print("right")
+        elif char=='\x1b[D':
+                print("left")
+
         else:
             print(char)
     
