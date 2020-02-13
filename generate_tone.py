@@ -36,7 +36,8 @@ class Generator:
     # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
     # def py_error_handler(self, filename, line, function, err, fmt):
     def py_error_handler(self, filename, line, function, err, fmt):
-        self.log(fmt)
+        # self.log(fmt)
+        pass
 
     def generate_tone(self, notes, volume=1.0):
         result = []

@@ -9,6 +9,7 @@ from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from curses import panel
 from operator import itemgetter
 import pickle
+import shutil
 
 import config
 import sounds
@@ -16,15 +17,17 @@ import vlc
 from mark import Mark
 from workerThread import WorkerThread
 
+
 class State():
     def __init__(self):
         marks = []
-        duration  = 0 
+        duration = 0
+
 
 class MyApp(object):
 
     def __init__(self, stdscreen):
-        
+
         self.rate = 1
         self.position = 0
         self.is_editing = False
@@ -53,30 +56,47 @@ class MyApp(object):
         self.window.clear()
 
         self.original_file = sys.argv[1]
-        # this extra step is to set the verbosity of the log errors so they
-        # don't print to the screen
-        # libvlc_set_log_verbosity tooltip says its defunct
-        self.VLC = vlc
-        self.VLC.libvlc_set_log_verbosity(None, 1)
-        self.instance = self.VLC.Instance(('--no-video'))
-        self.song = self.instance.media_player_new()
-        self.media = self.instance.media_new(self.original_file)
-        self.song.set_media(self.media)
-        
-
 
         self.file_path = os.path.dirname(os.path.realpath(sys.argv[1]))
-
-        self.file_basename=os.path.basename(sys.argv[1])
-
+        self.file_basename = os.path.basename(sys.argv[1])
         self.file_name = os.path.splitext(self.file_basename)[0]
+        self.file_ext = os.path.splitext(self.file_basename)[1]
 
-        self.state_file_name = os.path.join(self.file_path, self.file_name + ".state")
+        # if opening a backup, look for a state file with the original name
+        self.state_file_name = ""
+        self.old_file_name = ""
+        if self.file_name.endswith('-backup'):
+            self.state_file_name = os.path.join(
+                self.file_path,
+                self.file_name.replace('-backup', '') + ".state"
+            )
+            self.old_file_name = os.path.join(
+                self.file_path,
+                self.file_name.replace('-backup','') + self.file_ext
+            )
+        else:
+            self.file_name_new = os.path.join(
+                self.file_path,
+                self.file_name + "-backup" + self.file_ext
+            )
+            shutil.move(
+                os.path.realpath(sys.argv[1]),
+                os.path.join(
+                    self.file_path,
+                    self.file_name_new
+                )
+            )
+            # self.file_path = self.file_name_new
+            self.old_file_name = self.original_file
+            self.original_file = self.file_name + "-backup" + self.file_ext
+
+            self.state_file_name = os.path.join(
+                self.file_path, 
+                self.file_name + ".state"
+            )
 
         self.read_state_information()
-        
 
-        
         print('loading file')
         try:
             if not self.state.duration:
@@ -89,12 +109,21 @@ class MyApp(object):
             quick_state.duration = self.get_file_length(self.original_file)
             self.state = quick_state
 
+        
+        # this extra step is to set the verbosity of the log errors so they
+        # don't print to the screen
+        # libvlc_set_log_verbosity tooltip says its defunct
+        self.VLC = vlc
+        self.VLC.libvlc_set_log_verbosity(None, 1)
+        self.instance = self.VLC.Instance(('--no-video'))
+        self.song = self.instance.media_player_new()
+        self.media = self.instance.media_new(self.original_file)
+        self.song.set_media(self.media)
 
         self.song.play()
         self.media.parse()
         self.poll_thread = WorkerThread(self)
         self.poll_thread.start()
-
 
         try:
             while True:
@@ -126,16 +155,16 @@ class MyApp(object):
                         self.changePositionBySecondOffset(
                             -config.jump_time,
                             self.song.get_position()
-                            )
+                        )
                     else:
                         self.song = self.instance.media_player_new()
-                        self.media = self.instance.media_new(self.original_file)
+                        self.media = self.instance.media_new(
+                            self.original_file)
                         self.song.set_media(self.media)
                         self.song.play()
                         self.media.parse()
                         self.changePositionBySecondOffset(
                             -config.jump_time, 1)
-
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
@@ -204,8 +233,6 @@ class MyApp(object):
                     break
 
                 elif key == ord('w'):
-                    # self.log(self.current_mark)
-                    # self.log(self.markItr)
                     self.log(self.position)
                     self.log(self.song.get_position())
 
@@ -215,7 +242,7 @@ class MyApp(object):
                     global final_command
                     global edited_file
                     final_command, edited_file = self.applyEdits()
-                    self.log(final_command)
+                    # self.log(final_command)
                     break
 
                 # Go back to normal speed
@@ -224,7 +251,8 @@ class MyApp(object):
 
                 # print the current time formatted to the screen
                 elif key == config.current_time:
-                    c_time = self.poll_thread.timeStamp(self.state.duration, self.song.get_position())
+                    c_time = self.poll_thread.timeStamp(
+                        self.state.duration, self.song.get_position())
                     self.print_to_screen(c_time)
 
                 # print the lenght of the file to the screen
@@ -232,7 +260,7 @@ class MyApp(object):
                     length = self.poll_thread.timeStamp(self.state.duration, 1)
                     self.print_to_screen(length)
 
-                # causes the playback to stop and allows user to enter a spcific 
+                # causes the playback to stop and allows user to enter a spcific
                 # amount of time to move forward or backward
                 elif key == config.jump_specific:
                     self.jumpSpecificTime()
@@ -242,7 +270,7 @@ class MyApp(object):
                 elif key == config.block_from_begining:
                     self.begining_ending_block(True)
 
-                # creates a mark that starts from the current position to the end 
+                # creates a mark that starts from the current position to the end
                 # fo the file
                 elif key == config.block_till_end:
                     self.begining_ending_block(False)
@@ -271,7 +299,7 @@ class MyApp(object):
         Method to n
         """
         self.song.pause()
-        beginning_input = self.getInput('Beginning? ',1)
+        beginning_input = self.getInput('Beginning? ', 1)
         if beginning_input.lower() == 'b':
             self.nudgeForwardOrBackward(self.state.marks[self.markItr].start)
         elif beginning_input.lower() == 'e':
@@ -282,7 +310,7 @@ class MyApp(object):
             return None
 
     def nudgeForwardOrBackward(self, mark):
-        forward_input = self.getInput('Forward? ',1)
+        forward_input = self.getInput('Forward? ', 1)
         if forward_input == '':
             self.nudgeBlock(mark, True)
         elif forward_input == '-':
@@ -302,7 +330,7 @@ class MyApp(object):
         Arguments:
         mark: float - The current position to be nudged.
         nudgeIncrement: float - The amount to nudge the current position. If not passed, uses the default from the config.
-        nudgeForward: boolean - used to decide if the nudge is a positive or negative value. 
+        nudgeForward: boolean - used to decide if the nudge is a positive or negative value.
         """
         if nudgeForward:
             mark += nudgeIncrement
@@ -312,7 +340,7 @@ class MyApp(object):
 
     def write_state_information(self):
         """
-        Method to write the state information to a file named like the original 
+        Method to write the state information to a file named like the original
         with a .state extension
         """
         try:
@@ -337,10 +365,7 @@ class MyApp(object):
         Method to remove block from self.state.marks
         """
         try:
-            self.log(self.is_editing)
-            self.log(self.current_mark)
             if self.is_editing and self.current_mark:
-                self.log('deleting')
                 self.state.marks.pop(self.blockItrPrev)
                 if self.markItr > len(self.state.marks):
                     self.markItr = 0
@@ -364,7 +389,8 @@ class MyApp(object):
         try:
             if self.current_mark:
                 sounds.error_sound(self.volume)
-                self.log('tried to use B or E while an existing block was current - beginning_ending_block()')
+                self.log(
+                    'tried to use B or E while an existing block was current - beginning_ending_block()')
                 self.print_to_screen('Overlap with an existing block')
             else:
                 mark = Mark(position=self.song.get_position())
@@ -376,12 +402,14 @@ class MyApp(object):
                         mark.start = self.song.get_position()
                         mark.end = 1
                     self.state.marks.append(mark)
-                    self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
+                    self.state.marks = sorted(
+                        self.state.marks, key=itemgetter('start'))
                     self.markItr += 1
                     self.print_to_screen('saved')
                     self.write_state_information()
                 else:
-                    self.log('Tried to use B or E and found an overlap with exisitng block')
+                    self.log(
+                        'Tried to use B or E and found an overlap with exisitng block')
                     self.print_to_screen('Overlap with an existing block')
         except Exception as ex:
             self.log(ex)
@@ -426,7 +454,7 @@ class MyApp(object):
         Arguments - output - string - what is supposed to printed to screen
         """
         self.window.clear()
-        self.window.addstr(0,0,output)
+        self.window.addstr(0, 0, output)
 
     def ffprobe_get_length(self, input_file):
         """
@@ -434,9 +462,11 @@ class MyApp(object):
 
         Arguments - input_file - string - the path and file name of the file
         """
-        #ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
-        command = ['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1', input_file]
-        result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        # ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
+        command = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                   '-of', 'default=noprint_wrappers=1:nokey=1', input_file]
+        result = subprocess.run(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return float(result.stdout)
 
     def get_file_length(self, input_file):
@@ -446,14 +476,16 @@ class MyApp(object):
         Arguments - input_file - string - the path and file name of the file
         """
         time = 0
-        command  = [ 'ffmpeg','-i',input_file,'-f','null','-' ]
-        result = subprocess.run(command, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        command = ['ffmpeg', '-i', input_file, '-f', 'null', '-']
+        result = subprocess.run(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         lines = result.stdout.decode('utf-8').splitlines()
         for line in lines:
             for word in line.split():
                 if word.startswith('time='):
                     time_temp = word.split("=")[1].split(":")
-                    time = int(time_temp[0]) * 3600 + int(time_temp[1])*60 + round(float(time_temp[2]))
+                    time = int(time_temp[0]) * 3600 + int(time_temp[1]
+                                                          )*60 + round(float(time_temp[2]))
         return time * 1000
 
     def getInput(self, prompt, input_length):
@@ -461,7 +493,7 @@ class MyApp(object):
         Method to get input from the user, more than just one keystroke.
         """
         curses.echo()
-        self.window.addstr(0,0,prompt)
+        self.window.addstr(0, 0, prompt)
         self.window.refresh()
         input = self.window.getstr(1, 0, input_length)
         self.window.clear()
@@ -469,7 +501,7 @@ class MyApp(object):
 
     def changeVolume(self, value):
         """
-        Method to the change the current volume of the ancillary sounds. 
+        Method to the change the current volume of the ancillary sounds.
 
         Arguments - value - float - positive value raises the volume, negative
         value lowers the volume.
@@ -479,13 +511,13 @@ class MyApp(object):
     def jumpSpecificTime(self):
         self.song.pause()
         self.window.clear()
-        forward_input = self.getInput('forward? ',1)
+        forward_input = self.getInput('forward? ', 1)
         reverse = False
         if forward_input.decode() == "-":
             reverse = True
         hours = 0
         while True:
-            hours_input = self.getInput('hours? ',2)
+            hours_input = self.getInput('hours? ', 2)
             if hours_input.decode() == '':
                 break
             try:
@@ -522,18 +554,18 @@ class MyApp(object):
             except ValueError as e:
                 self.log('error seconds')
                 self.log(e)
-        seconds = seconds + minutes * 60 + hours * 60 *60
+        seconds = seconds + minutes * 60 + hours * 60 * 60
         if reverse:
             seconds *= -1
 
         self.changePositionBySecondOffset(
             seconds,
             self.song.get_position()
-            )
+        )
         self.song.play()
 
     def createNewMark(self):
-        """ 
+        """
         Method to create a new block and set it to current.
 
         defunct
@@ -541,15 +573,12 @@ class MyApp(object):
         try:
             if self.current_mark:
                 sounds.error_sound(self.volume)
-                self.log('tried to create a new mark when one existed - createNewMark()')
+                self.log(
+                    'tried to create a new mark when one existed - createNewMark()')
             else:
                 count = len(self.state.marks)
                 self.current_mark = Mark(position=self.song.get_position())
                 self.state.marks.append(self.current_mark)
-                # self.log(len(self.state.marks))
-                # self.log(self.state.marks)
-                # self.log(self.state.duration)
-                # self.log(self.state.marks[0])
                 self.write_state_information()
                 self.print_to_screen('block {}.'.format(count+1))
         except Exception as ex:
@@ -566,13 +595,15 @@ class MyApp(object):
             # self.state.marks.append(self.current_mark)
             self.current_mark = None
             # TODO Not thinking I need to do this. investgate later
-            self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
+            self.state.marks = sorted(
+                self.state.marks, key=itemgetter('start'))
             self.markItr += 1
             self.print_to_screen('saved')
             self.write_state_information()
         else:
             sounds.error_sound(self.volume)
-            self.log('tried to save a mark that is unfiinshed  - saveCurrentMark_old')
+            self.log(
+                'tried to save a mark that is unfiinshed  - saveCurrentMark_old')
 
     def saveCurrentMark(self):
         """
@@ -590,7 +621,7 @@ class MyApp(object):
 
     def check_for_overlap(self, position, index=None):
         """
-        Method to check if the proposed position for a new block beginning or 
+        Method to check if the proposed position for a new block beginning or
         ending position overlaps with another block
 
         Arguments - position - float - the proposed position
@@ -602,7 +633,7 @@ class MyApp(object):
         the current object getting edited.
         """
         if index is not None:
-            for i,mark in enumerate(self.state.marks):
+            for i, mark in enumerate(self.state.marks):
                 if i != index:
                     if mark.overlap(position):
                         return True
@@ -618,14 +649,14 @@ class MyApp(object):
         """
         Method to mark the start position of a new block.
 
-        Starts by seeing if it is in edit mode. 
+        Starts by seeing if it is in edit mode.
 
         If it is in edit mode, it gets the index of the current mark and compares
         the proposed new start against all the other marks to see if it overlaps
         with any of them. If not, it updates the start position of the block.
 
-        If it is not in edit move, it checks to see if the proposed position 
-        overlaps with any of the other blocks. If it does not, it creates a new 
+        If it is not in edit move, it checks to see if the proposed position
+        overlaps with any of the other blocks. If it does not, it creates a new
         block and sets the start position at the current position
         """
         try:
@@ -635,25 +666,29 @@ class MyApp(object):
                 if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
-                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition() - is_editing')
+                    self.log(
+                        'tried to create a block that overlaps another exisitng block - startMarkPosition() - is_editing')
                 else:
                     self.current_mark.start = self.song.get_position()
                     sounds.mark_start_sound(self.volume)
-                    self.print_to_screen('edited beginning of block {}'.format(len(self.state.marks)))
+                    self.print_to_screen(
+                        'edited beginning of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
                 if self.check_for_overlap(self.song.get_position()):
                     sounds.error_sound(self.volume)
-                    self.log('tried to create a block that overlaps another exisitng block - startMarkPosition() - !is_editing')
+                    self.log(
+                        'tried to create a block that overlaps another exisitng block - startMarkPosition() - !is_editing')
                     self.print_to_screen('overlap')
                 else:
                     self.current_mark = Mark(position=self.song.get_position())
                     self.state.marks.append(self.current_mark)
                     sounds.mark_start_sound(self.volume)
-                    self.print_to_screen('beginning block {}'.format(len(self.state.marks)))
+                    self.print_to_screen(
+                        'beginning block {}'.format(len(self.state.marks)))
                     self.write_state_information()
-                    
+
         except Exception as ex:
             self.log(ex)
 
@@ -674,7 +709,8 @@ class MyApp(object):
                 self.current_mark.start = begin_position_check
                 sounds.mark_start_sound(self.volume)
                 self.print_to_screen('begining')
-                self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
+                self.log(self.poll_thread.timeStamp(
+                    self.state.duration, begin_position_check))
                 self.write_state_information()
             else:
                 sounds.error_sound(self.volume)
@@ -687,13 +723,13 @@ class MyApp(object):
         """
         Method to mark the end position of an existing block.
 
-        Starts by seeing if it is in edit mode. 
+        Starts by seeing if it is in edit mode.
 
         If it is in edit mode, it gets the index of the current mark and compares
         the proposed new end against all the other marks to see if it overlaps
         with any of them. If not, it updates the end position of the block.
 
-        If it is not in edit move, it checks to see if the proposed position 
+        If it is not in edit move, it checks to see if the proposed position
         overlaps with any of the other blocks. If it does not, it sets the start
         position at the current position
         """
@@ -704,26 +740,30 @@ class MyApp(object):
                 if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
-                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition() - is_editing')
+                    self.log(
+                        'tried to create a block that overlaps another exisitng block - endMarkPosition() - is_editing')
                 else:
                     self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
-                    self.print_to_screen('edited ending of block {}'.format(len(self.state.marks)))
+                    self.print_to_screen(
+                        'edited ending of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
                 if self.check_for_overlap(self.song.get_position()):
                     sounds.error_sound(self.volume)
-                    self.log('tried to create a block that overlaps another exisitng block - endMarkPosition() - !is_editing')
+                    self.log(
+                        'tried to create a block that overlaps another exisitng block - endMarkPosition() - !is_editing')
                     self.print_to_screen('overlap')
                 elif self.current_mark:
                     self.current_mark.end = self.song.get_position()
                     sounds.mark_end_sound(self.volume)
                     self.current_mark = None
-                    self.print_to_screen('ending block {}'.format(len(self.state.marks)))
+                    self.print_to_screen(
+                        'ending block {}'.format(len(self.state.marks)))
                     self.state.marks.sort()
                     self.write_state_information()
-                    
+
         except Exception as ex:
             self.log(ex)
 
@@ -744,31 +784,36 @@ class MyApp(object):
                 self.current_mark.end = begin_position_check
                 sounds.mark_end_sound(self.volume)
                 self.print_to_screen('end')
-                self.log(self.poll_thread.timeStamp(self.duration, begin_position_check))
+                self.log(self.poll_thread.timeStamp(
+                    self.state.duration, begin_position_check))
                 self.write_state_information()
             else:
-                self.log('tried to create a block that overlaps another exisitng block - endMarkPosition_old()')
+                self.log(
+                    'tried to create a block that overlaps another exisitng block - endMarkPosition_old()')
                 sounds.error_sound(self.volume)
         else:
             sounds.error_sound(self.volume)
-            self.log('tried to end a mark without a current block - endMarkPosition_old')
+            self.log(
+                'tried to end a mark without a current block - endMarkPosition_old')
 
     def check_for_null_blocks(self):
         """
-        Method to check the blocks for any that did have the beginning or ending specified 
+        Method to check the blocks for any that did have the beginning or ending specified
         """
-        self.state.marks = list(filter(lambda x : x.is_null() != True, self.state.marks))
+        self.state.marks = list(
+            filter(lambda x: x.is_null() != True, self.state.marks))
         self.log('check_for_null_blocks')
 
     def applyEdits(self):
         """
-        Method to create the final command for editing the original file. 
+        Method to create the final command for editing the original file.
         """
         self.song.stop()
         self.check_for_null_blocks()
 
-        filename, file_extension = os.path.splitext(self.original_file)
-        edited_file = filename + "-edited" + file_extension
+        # filename, file_extension = os.path.splitext(self.original_file)
+        # edited_file = filename + "-edited" + file_extension
+        edited_file = self.old_file_name
         command = ['ffmpeg', '-i', self.original_file]
         select = "select='"
         aselect = "aselect='"
@@ -810,14 +855,14 @@ class MyApp(object):
         command.append(aselect)
         command.append(edited_file)
         self.log(command)
-        return command,edited_file
+        return command, edited_file
 
     def cycleThroughMarks(self, edit=False):
         """
         Method to move the playback through the existing blocks.
 
         Arguments:
-        edit - boolean - True if the intent is to edit the blocks and False if 
+        edit - boolean - True if the intent is to edit the blocks and False if
         not. Default is False
         """
 
@@ -825,11 +870,13 @@ class MyApp(object):
         if edit:
             self.current_mark = self.state.marks[self.markItr]
         if self.cycle_start:
-            self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].start)
+            self.changePositionBySecondOffset(
+                config.preview_time, self.state.marks[self.markItr].start)
             self.cycle_start = False
             self.print_to_screen('Block {} start'.format(self.markItr+1))
         else:
-            self.changePositionBySecondOffset(config.preview_time, self.state.marks[self.markItr].end)
+            self.changePositionBySecondOffset(
+                config.preview_time, self.state.marks[self.markItr].end)
             self.cycle_start = True
             self.print_to_screen('Block {} end'.format(self.markItr+1))
             self.updateIters()
@@ -844,39 +891,43 @@ class MyApp(object):
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos):
         """
-        Method to change the current position of the playing audio 
+        Method to change the current position of the playing audio
 
         Arguments:
         sec_offset - float - how many seconds to change from the current position,
         a negative value will go back while a posititve value will move formard
-        curr_postion - float - the vlc position marker - this is a value between 
+        curr_postion - float - the vlc position marker - this is a value between
         0 and 1.
         """
         try:
-            cur_sec = round(cur_pos * self.state.duration) + (sec_offset * 1000)
+            cur_sec = round(cur_pos * self.state.duration) + \
+                (sec_offset * 1000)
             new_pos = cur_sec / self.state.duration
             self.log(new_pos)
             if sec_offset < 0:
                 if new_pos < 0:
                     new_pos = 0
                     # print out remaining time instead of jumping to end
-                    left = self.poll_thread.timeStamp(self.state.duration, self.song.get_position())
+                    left = self.poll_thread.timeStamp(
+                        self.state.duration, self.song.get_position())
                     # self.window.addstr(0,0,"the most you can jump backwards is " + left)
-                    self.print_to_screen('the most you can jump backwoards is {}'.format(left))
+                    self.print_to_screen(
+                        'the most you can jump backwoards is {}'.format(left))
                     # return None
             else:
                 if new_pos > 1:
                     new_pos = 1
                     # print out remaining time instead of jumping to end
-                    left = self.poll_thread.timeStamp(self.state.duration, 1 - self.song.get_position())
-                    self.print_to_screen('the most you can jump forwards is {}'.format(left))
+                    left = self.poll_thread.timeStamp(
+                        self.state.duration, 1 - self.song.get_position())
+                    self.print_to_screen(
+                        'the most you can jump forwards is {}'.format(left))
                     # self.window.addstr(0,0,"the most you can jump forward is " + left)
                     # return None
             self.song.set_position(new_pos)
             self.song.play()
         except Exception as ex:
             self.log(ex)
-
 
 
 def printHelp():
@@ -888,36 +939,52 @@ def printHelp():
     print('new blocks. To edit an existing block, the user has to cycle through the existing blocks. It will place')
     print('the user 2 seconds before the block unless the block starts at the beginning of the file')
     print('To begin a new block press {}.'.format(chr(config.mark_create_new)))
-    print('To set the starting point of a block press {}.'.format(chr(config.mark_record_start_position)))
-    print('To set the ending point of a block press {}.'.format(chr(config.mark_record_end_position)))
-    print('To save the current block press {}.'.format(chr(config.mark_save_current)))
-    print('To set a block from the beginning of the file to the current position press {}.'.format(chr(config.block_from_begining)))
-    print('To set a block from the current location till the end of the file press {}.'.format(chr(config.block_till_end)))
+    print('To set the starting point of a block press {}.'.format(
+        chr(config.mark_record_start_position)))
+    print('To set the ending point of a block press {}.'.format(
+        chr(config.mark_record_end_position)))
+    print('To save the current block press {}.'.format(
+        chr(config.mark_save_current)))
+    print('To set a block from the beginning of the file to the current position press {}.'.format(
+        chr(config.block_from_begining)))
+    print('To set a block from the current location till the end of the file press {}.'.format(
+        chr(config.block_till_end)))
     print('To delete the current block press {}.'.format(chr(config.delete_block)))
-    print('To edit existing blocks, press {} to cycle through blocks in edit mode.'.format(chr(config.cycle_through_marks)))
+    print('To edit existing blocks, press {} to cycle through blocks in edit mode.'.format(
+        chr(config.cycle_through_marks)))
     print('To nudge a block beginning or ending, activate the block and press {}. It will ask beginning? If you want to '.format(chr(config.nudge)))
     print('edit the beginning of the block press the Return key. If you want to edit the ending of the block enter e.')
     print('Then it will ask to be continued')
     print('')
     print('MOVING THROUGH THE FILE')
     print('To play or pause existing file press {}.'.format(config.play_pause_desc))
-    print('To jump ahead {} seconds press {}.'.format(config.jump_time, (config.jump_forward_desc)))
-    print('To jump back {} seconds press {}.'.format(config.jump_time, config.jump_back_desc))
+    print('To jump ahead {} seconds press {}.'.format(
+        config.jump_time, (config.jump_forward_desc)))
+    print('To jump back {} seconds press {}.'.format(
+        config.jump_time, config.jump_back_desc))
     print('To speed up play speed press {}.'.format((config.play_speed_up_desc)))
-    print('To slow down play speed press {}.'.format((config.play_speed_down_desc)))
-    print('To go back to normal play speed press {}.'.format(chr(config.normal_speed)))
-    print('To jump to a specific time forward or backward press {}. This will stop the playing of the file and '.format(chr(config.jump_specific)))
+    print('To slow down play speed press {}.'.format(
+        (config.play_speed_down_desc)))
+    print('To go back to normal play speed press {}.'.format(
+        chr(config.normal_speed)))
+    print('To jump to a specific time forward or backward press {}. This will stop the playing of the file and '.format(
+        chr(config.jump_specific)))
     print('ask a few questions. First it will ask forward? No response will result in a forward jump, where as')
     print('a - will result in a backward jump. Then it will ask for hours. Enter the number of hours or press')
     print('return to accept as zero. Then it will ask for minutes and then seconds. After the amounts are entered')
     print('it will jump that far ahead')
     print('To quit the program press {}'.format(chr(config.quit_program)))
-    print('To apply the edits to the file, press {}'.format(chr(config.begin_edits)))
+    print('To apply the edits to the file, press {}'.format(
+        chr(config.begin_edits)))
     print('')
     print('OTHER COMMANDS')
-    print('To print out the current time, press {}'.format(chr(config.current_time)))
-    print('To raise the volume of the sound effects, press {}'.format(chr(config.volume_up)))
-    print('To lower the volume of the sound effects, press {}'.format(chr(config.volume_down)))
+    print('To print out the current time, press {}'.format(
+        chr(config.current_time)))
+    print('To raise the volume of the sound effects, press {}'.format(
+        chr(config.volume_up)))
+    print('To lower the volume of the sound effects, press {}'.format(
+        chr(config.volume_down)))
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
@@ -928,7 +995,8 @@ if __name__ == '__main__':
             edited_file = None
             curses.wrapper(MyApp)
             if final_command:
-                process = subprocess.Popen(final_command, stdout=subprocess.PIPE,universal_newlines=True)
+                process = subprocess.Popen(
+                    final_command, stdout=subprocess.PIPE, universal_newlines=True)
                 while True:
                     output = process.stdout.readline()
                     if output == '' and process.poll() is not None:
