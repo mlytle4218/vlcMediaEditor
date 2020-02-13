@@ -1,0 +1,10 @@
+2020-02-13 14:03:56 - file duration: 337000
+2020-02-13 14:04:00 - 0.009833827893175074
+2020-02-13 14:04:01 - 0.020097922848664688
+2020-02-13 14:04:01 - check_for_null_blocks
+2020-02-13 14:04:01 - ['ffmpeg', '-i', 'phil-backup.mp3', '-vf', "select='between(t,0.0,5.313)+between(t,8.773,337.0)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,5.313)+between(t,8.773,337.0)',asetpts=N/SR/TB", 'phil.mp3']
+2020-02-13 14:04:22 - file duration: 337000
+2020-02-13 14:04:23 - 0.009833827893175074
+2020-02-13 14:04:24 - 0.020097922848664688
+2020-02-13 14:04:25 - check_for_null_blocks
+2020-02-13 14:04:25 - ['ffmpeg', '-i', 'phil-backup.mp3', '-vf', "select='between(t,0.0,5.313)+between(t,8.773,337.0)',setpts=N/FRAME_RATE/TB ", '-af', "aselect='between(t,0.0,5.313)+between(t,8.773,337.0)',asetpts=N/SR/TB", '/home/marc/Desktop/player/phil.mp3']
