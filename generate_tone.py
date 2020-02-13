@@ -4,6 +4,7 @@ import math
 import numpy as np
 import pyaudio
 import ctypes
+import datetime, time
 
 
 # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
@@ -24,10 +25,18 @@ class Generator:
     def __init__(self, sample_rate=44100):
         self.sample_rate = sample_rate
 
+    def log(self, input):
+        input = str(input)
+        with open("log.txt", "a") as myfile:
+            string = datetime.datetime.fromtimestamp(
+                time.time()).strftime('%Y-%m-%d %H:%M:%S')
+            string = string + ' - ' + input + '\n'
+            myfile.write(string)
+
     # this incorporated from https://stackoverflow.com/questions/7088672/pyaudio-working-but-spits-out-error-messages-each-time
     # def py_error_handler(self, filename, line, function, err, fmt):
     def py_error_handler(self, filename, line, function, err, fmt):
-        pass
+        self.log(fmt)
 
     def generate_tone(self, notes, volume=1.0):
         result = []
