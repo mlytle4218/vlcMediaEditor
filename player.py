@@ -517,56 +517,61 @@ class MyApp(object):
         self.song.pause()
         self.window.clear()
         forward_input = self.getInput('forward? ', 1)
-        reverse = False
-        if forward_input.decode() == "-":
-            reverse = True
-        hours = 0
-        while True:
-            hours_input = self.getInput('hours? ', 2)
-            if hours_input.decode() == '':
-                break
-            try:
-                hours_input = int(hours_input.decode())
-                if (hours_input >= hours):
-                    hours = hours_input
+        if forward_input.decode() == "b":
+            self.song.set_position(0)
+        elif forward_input.decode() == "e":
+            self.song.set_position(1)
+        else:
+            reverse = False
+            if forward_input.decode() == "-":
+                reverse = True
+            hours = 0
+            while True:
+                hours_input = self.getInput('hours? ', 2)
+                if hours_input.decode() == '':
                     break
-            except ValueError as e:
-                self.log('error hours')
-                self.log(e)
-        minutes = 0
-        while True:
-            minutes_input = self.getInput('minutes? ', 2)
-            if minutes_input.decode() == '':
-                break
-            try:
-                minutes_input = int(minutes_input.decode())
-                if (minutes_input >= minutes):
-                    minutes = minutes_input
+                try:
+                    hours_input = int(hours_input.decode())
+                    if (hours_input >= hours):
+                        hours = hours_input
+                        break
+                except ValueError as e:
+                    self.log('error hours')
+                    self.log(e)
+            minutes = 0
+            while True:
+                minutes_input = self.getInput('minutes? ', 2)
+                if minutes_input.decode() == '':
                     break
-            except ValueError as e:
-                self.log('error minutes')
-                self.log(e)
-        seconds = 0
-        while True:
-            seconds_input = self.getInput('seconds? ', 2)
-            if seconds_input.decode() == '':
-                break
-            try:
-                seconds_input = int(seconds_input.decode())
-                if (seconds_input >= seconds):
-                    seconds = seconds_input
+                try:
+                    minutes_input = int(minutes_input.decode())
+                    if (minutes_input >= minutes):
+                        minutes = minutes_input
+                        break
+                except ValueError as e:
+                    self.log('error minutes')
+                    self.log(e)
+            seconds = 0
+            while True:
+                seconds_input = self.getInput('seconds? ', 2)
+                if seconds_input.decode() == '':
                     break
-            except ValueError as e:
-                self.log('error seconds')
-                self.log(e)
-        seconds = seconds + minutes * 60 + hours * 60 * 60
-        if reverse:
-            seconds *= -1
+                try:
+                    seconds_input = int(seconds_input.decode())
+                    if (seconds_input >= seconds):
+                        seconds = seconds_input
+                        break
+                except ValueError as e:
+                    self.log('error seconds')
+                    self.log(e)
+            seconds = seconds + minutes * 60 + hours * 60 * 60
+            if reverse:
+                seconds *= -1
 
-        self.changePositionBySecondOffset(
-            seconds,
-            self.song.get_position()
-        )
+            self.changePositionBySecondOffset(
+                seconds,
+                self.song.get_position()
+            )
         self.song.play()
 
     def createNewMark(self):
