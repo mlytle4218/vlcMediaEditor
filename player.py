@@ -913,7 +913,7 @@ class MyApp(object):
             cur_sec = round(cur_pos * self.state.duration) + \
                 (sec_offset * 1000)
             new_pos = cur_sec / self.state.duration
-            self.log(new_pos)
+            # self.log(new_pos)
             if sec_offset < 0:
                 if new_pos < 0:
                     new_pos = 0
