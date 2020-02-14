@@ -42,7 +42,7 @@ quit_program = ord('q')
 begin_edits = ord('o')
 
 # Interface keys
-current_time = ord('t')
+current_time = ord('w')
 file_length = ord('l')
 
 # volume controls

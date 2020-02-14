@@ -232,7 +232,7 @@ class MyApp(object):
                     self.poll_thread.join()
                     break
 
-                elif key == ord('w'):
+                elif key == ord('x'):
                     self.log(self.position)
                     self.log(self.song.get_position())
 
