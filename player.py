@@ -242,7 +242,7 @@ class MyApp(object):
                     global final_command
                     global edited_file
                     final_command, edited_file = self.applyEdits()
-                    # self.log(final_command)
+                    self.poll_thread.join()
                     break
 
                 # Go back to normal speed
@@ -999,6 +999,7 @@ if __name__ == '__main__':
             final_command = None
             edited_file = None
             curses.wrapper(MyApp)
+            curses.endwin()
             if final_command:
                 process = subprocess.Popen(
                     final_command, stdout=subprocess.PIPE, universal_newlines=True)
