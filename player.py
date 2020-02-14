@@ -454,8 +454,12 @@ class MyApp(object):
 
         Arguments - output - string - what is supposed to printed to screen
         """
+        # self.log('print_to_screen: {}'.format(output))
         self.window.clear()
         self.window.addstr(0, 0, output)
+        self.window.refresh()
+
+        curses.doupdate()
 
     def ffprobe_get_length(self, input_file):
         """
@@ -874,12 +878,12 @@ class MyApp(object):
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].start)
             self.cycle_start = False
-            self.print_to_screen('Block {} start'.format(self.markItr+1))
+            # self.print_to_screen('Block {} start'.format(self.markItr+1))
         else:
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].end)
             self.cycle_start = True
-            self.print_to_screen('Block {} end'.format(self.markItr+1))
+            # self.print_to_screen('Block {} end'.format(self.markItr+1))
             self.updateIters()
 
     def updateIters(self):

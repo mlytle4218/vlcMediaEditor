@@ -5,7 +5,6 @@ import threading
 import sounds
 
 class WorkerThread(threading.Thread):
-    # differences = []
     """
     A worker thread that polls the vlc api for current position and calls options as necessary
 
@@ -35,53 +34,32 @@ class WorkerThread(threading.Thread):
         # cycles are wasted while waiting.
         # Also, 'get' is given a timeout, so stoprequest is always checked,
         # even if there's nothing in the queue.
+        # difference - this is a 'magic' number to give leaway to testing to each
+        # mark relative to the current time. because there could be variation 
+        # between the polled time from vlc and the current mark, it needs a 
+        # cushion to test against. This needs to be converted to a algorith 
+        # relative to the length of the file.
+
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
                 try:
-                    for each in self.song.state.marks:
+                    for itr,each in enumerate(self.song.state.marks):
                         if abs(self.current- self.last) < self.difference : 
                             if self.last <= each.start <= self.current:
                                 self.song.song.pause()
+                                self.song.print_to_screen("Block {} start".format(itr+1))
                                 time.sleep(1)
                                 # sounds.mark_start_sound(self.song.volume)
                                 self.song.song.play()
                             elif self.last <= each.end <= self.current:
+                                self.song.print_to_screen("Block {} end".format(itr+1))
                                 # sounds.mark_end_sound(self.song.volume)
                                 self.song.song.pause()
                                 time.sleep(1)
                                 self.song.song.play()
 
-
-
-
-
-
-
-
-                        # if abs(self.current- self.last) < self.difference and self.last <= each.start <= self.current:
-                        # # if (self.current - (self.difference)) < each.start < (self.current + (self.difference)):
-                        # # if each.start > (self.current - (self.difference)) and each.start < (self.current + (self.difference)):
-                        #     # self.log(self.song.song)
-                        #     self.log('start_sound')
-                        #     self.log(abs(self.current - self.last))
-                        #     self.song.song.pause()
-                        #     sounds.mark_start_sound(self.song.volume)
-                        #     self.song.song.play()
-
-                        # if abs(self.current- self.last) < self.difference and self.last <= each.end <= self.current:
-                        # # if (self.current - (self.difference)) < each.end < (self.current + (self.difference)):
-                        #     self.log('end_sound')
-                        #     # self.log(self.current)
-                        #     self.log(abs(self.current - self.last))
-                        #     # self.log(self.last)
-                        #     sounds.mark_end_sound(self.song.volume)
-
-                    # update the difference - this is a 'magic' number to give leaway to testing to each
-                    # mark relative to the current time. because there could be variation between the polled
-                    # time from vlc and the current mark, it needs a cushion to test against. This needs to be converted
-                    # to a algorith relative to the length of the file.
-
+                    
                     self.last = self.current
                     # self.song.window.refresh()
                 except Exception as e:
@@ -108,7 +86,5 @@ class WorkerThread(threading.Thread):
 
     # used to shut down the worker thread
     def join(self, timeout=None):
-        # average = sum(self.differences) / len(self.differences)
-        # self.log(average)
         self.stoprequest.set()
         super(WorkerThread, self).join(timeout)
