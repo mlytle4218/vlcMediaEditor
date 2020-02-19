@@ -22,7 +22,6 @@ class State():
     def __init__(self):
         marks = []
         duration = 0
-        is_editing = False
 
 
 class MyApp(object):
@@ -475,6 +474,10 @@ class MyApp(object):
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return float(result.stdout)
 
+
+# ffprobe -v error -show_entries format=duration','-of default=noprint_wrappers=1:nokey=1
+
+
     def get_file_length(self, input_file):
         """
         Method to get the length of the original file
@@ -595,27 +598,6 @@ class MyApp(object):
         except Exception as ex:
             self.log(ex)
 
-    def saveCurrentMark_old(self):
-        """
-        Method checks that block is finished and if it is, save it and remove it from the current block.
-        """
-        # check to make sure there is an active mark and that both the beginning and end have
-        # been entered
-        if self.current_mark and self.current_mark.start != -1 and self.current_mark.end != -1:
-            self.current_mark.reset()
-            # self.state.marks.append(self.current_mark)
-            self.current_mark = None
-            # TODO Not thinking I need to do this. investgate later
-            self.state.marks = sorted(
-                self.state.marks, key=itemgetter('start'))
-            self.markItr += 1
-            self.print_to_screen('saved')
-            self.write_state_information()
-        else:
-            sounds.error_sound(self.volume)
-            self.log(
-                'tried to save a mark that is unfiinshed  - saveCurrentMark_old')
-
     def saveCurrentMark(self):
         """
         Method checks that block is finished and if it is, save it and remove it from the current block.
@@ -671,64 +653,14 @@ class MyApp(object):
         block and sets the start position at the current position
         """
         try:
-            # is in edit mode
-            if self.is_editing:
-                # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
-                    sounds.error_sound(self.volume)
-                    self.print_to_screen('overlap')
-                    self.log(
-                        'tried to create a block that overlaps another exisitng block - startMarkPosition() - is_editing')
-                else:
-                    self.current_mark.start = self.song.get_position()
-                    sounds.mark_start_sound(self.volume)
-                    self.print_to_screen(
-                        'edited beginning of block {}'.format(len(self.state.marks)))
-                    self.write_state_information()
-            # is in new mode
+            if self.current_mark and self.current_mark.is_editing:
+                self.current_mark.start = self.song.get_position()
             else:
-                if self.check_for_overlap(self.song.get_position()):
-                    sounds.error_sound(self.volume)
-                    self.log(
-                        'tried to create a block that overlaps another exisitng block - startMarkPosition() - !is_editing')
-                    self.print_to_screen('overlap')
-                else:
-                    self.current_mark = Mark(position=self.song.get_position())
-                    self.state.marks.append(self.current_mark)
-                    sounds.mark_start_sound(self.volume)
-                    self.print_to_screen(
-                        'beginning block {}'.format(len(self.state.marks)))
-                    self.write_state_information()
+                self.current_mark = Mark()
+                self.current_mark.start = self.song.get_position()
 
         except Exception as ex:
             self.log(ex)
-
-    def startMarkPosition_old(self):
-        """
-        Method to mark the start position of the current block.
-        """
-        if self.current_mark:
-            begin_position_check = self.song.get_position()
-            okay = True
-            # cycle through the saved marks and make sure the current position does
-            # overlap with them
-            for each in self.state.marks:
-                if each != self.current_mark:
-                    if each.start <= begin_position_check <= each.end:
-                        okay = False
-            if okay:
-                self.current_mark.start = begin_position_check
-                sounds.mark_start_sound(self.volume)
-                self.print_to_screen('begining')
-                self.log(self.timeStamp(
-                    self.state.duration, begin_position_check))
-                self.write_state_information()
-            else:
-                sounds.error_sound(self.volume)
-                self.log('was overlap with another block - startMarkPosition()')
-        else:
-            self.log('no current_mark')
-            sounds.error_sound(self.volume)
 
     def endMarkPosition(self):
         """
@@ -745,67 +677,14 @@ class MyApp(object):
         position at the current position
         """
         try:
-            # is in edit mode
-            if self.is_editing:
-                # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
-                    sounds.error_sound(self.volume)
-                    self.print_to_screen('overlap')
-                    self.log(
-                        'tried to create a block that overlaps another exisitng block - endMarkPosition() - is_editing')
-                else:
-                    self.current_mark.end = self.song.get_position()
-                    sounds.mark_end_sound(self.volume)
-                    self.print_to_screen(
-                        'edited ending of block {}'.format(len(self.state.marks)))
-                    self.write_state_information()
-            # is in new mode
+            if self.current_mark and self.current_mark.end < 0:
+                self.current_mark.end = self.song.get_position()
             else:
-                if self.check_for_overlap(self.song.get_position()):
-                    sounds.error_sound(self.volume)
-                    self.log(
-                        'tried to create a block that overlaps another exisitng block - endMarkPosition() - !is_editing')
-                    self.print_to_screen('overlap')
-                elif self.current_mark:
-                    self.current_mark.end = self.song.get_position()
-                    sounds.mark_end_sound(self.volume)
-                    self.current_mark = None
-                    self.print_to_screen(
-                        'ending block {}'.format(len(self.state.marks)))
-                    self.state.marks.sort()
-                    self.write_state_information()
+                self.current_mark = Mark()
+                self.current_mark.start = self.song.get_position()
 
         except Exception as ex:
             self.log(ex)
-
-    def endMarkPosition_old(self):
-        """
-        Method to mark the end position of the current block.
-        """
-        if self.current_mark:
-            begin_position_check = self.song.get_position()
-            okay = True
-            # cycle through the saved marks and make sure the current position does
-            # overlap with them
-            for each in self.state.marks:
-                if each != self.current_mark:
-                    if each.start <= begin_position_check <= each.end:
-                        okay = False
-            if okay:
-                self.current_mark.end = begin_position_check
-                sounds.mark_end_sound(self.volume)
-                self.print_to_screen('end')
-                self.log(self.timeStamp(
-                    self.state.duration, begin_position_check))
-                self.write_state_information()
-            else:
-                self.log(
-                    'tried to create a block that overlaps another exisitng block - endMarkPosition_old()')
-                sounds.error_sound(self.volume)
-        else:
-            sounds.error_sound(self.volume)
-            self.log(
-                'tried to end a mark without a current block - endMarkPosition_old')
 
     def check_for_null_blocks(self):
         """
