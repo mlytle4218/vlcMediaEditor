@@ -15,7 +15,7 @@ import config
 import sounds
 import vlc
 from mark import Mark
-from workerThread import WorkerThread
+from wt import WT
 
 
 class State():
@@ -122,7 +122,7 @@ class MyApp(object):
 
         self.song.play()
         self.media.parse()
-        self.poll_thread = WorkerThread(self)
+        self.poll_thread = WT(self)
         self.poll_thread.start()
 
         try:
@@ -299,8 +299,8 @@ class MyApp(object):
                 elif key == config.delete_block:
                     self.delete_block()
 
-                elif key == config.nudge:
-                    self.nudgeBeginningOrEnding()
+                # elif key == config.nudge:
+                #     self.nudgeBeginningOrEnding()
 
                 elif key == config.list_marks:
                     self.log('current blocks')
@@ -384,6 +384,21 @@ class MyApp(object):
             self.log("No file found")
 
     def delete_block(self):
+        """
+        Method to remove block from self.state.marks
+        """
+        try:
+            if self.current_mark.is_editing:
+                block_to_be_deleted = self.state.marks.index(self.current_mark)
+                self.state.marks.pop(block_to_be_deleted)
+                self.current_mark = None
+                self.print_to_screen('block deleted')
+            else:
+                self.print_to_screen('Not in edit mode')
+        except Exception as ex:
+            self.log(ex)
+
+    def delete_block_old(self):
         """
         Method to remove block from self.state.marks
         """
@@ -818,7 +833,9 @@ class MyApp(object):
         not. Default is False.
         """
         if edit:
-            self.state.marks[self.markItr].is_editing = True
+            mk = self.state.marks[self.markItr]
+            mk.is_editing = True
+            self.current_mark = mk
 
         self.changePositionBySecondOffset(
             config.preview_time, self.state.marks[self.markItr].start
