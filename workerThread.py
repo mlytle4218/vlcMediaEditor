@@ -1,7 +1,5 @@
 #!/usr/bin/env python3 
-# import datetime
-# import time
-# import sounds
+import time
 import threading
 
 class WorkerThread(threading.Thread):
@@ -36,21 +34,25 @@ class WorkerThread(threading.Thread):
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
                 try:
-                    for each in self.song.state.marks:
-                        if abs(self.current- self.last) < self.difference : 
+                    for itr,each in enumerate(self.song.state.marks):
+                        if abs(self.current- self.last) < self.difference: 
                             if self.last <= each.start <= self.current:
                                 self.song.song.set_position(each.end)
-                                # self.song.song.pause()
+                                self.song.print_to_screen('Block {}'.format(itr + 1))
+                                self.song.song.pause()
                                 # self.song.print_to_screen("Block {} start".format(itr+1))
-                                # time.sleep(1)
+                                time.sleep(1)
                                 # # sounds.mark_start_sound(self.song.volume)
-                                # self.song.song.play()
+                                self.song.song.play()
                             # elif self.last <= each.end <= self.current:
                             #     self.song.print_to_screen("Block {} end".format(itr+1))
                             #     # sounds.mark_end_sound(self.song.volume)
                             #     self.song.song.pause()
                             #     time.sleep(1)
                             #     self.song.song.play()
+                        elif abs(self.current - self.last) != 0:
+                            pass
+                            # self.song.print_to_screen('big jump')
 
                     
                     self.last = self.current

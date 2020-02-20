@@ -150,11 +150,23 @@ class MyApp(object):
                     self.update_rate(-config.play_speed_rate)
 
                 # Jumps back 5 seconds
+                # get_state() 
+                # {0: 'NothingSpecial',
+                # 1: 'Opening',
+                # 2: 'Buffering',
+                # 3: 'Playing',
+                # 4: 'Paused',
+                # 5: 'Stopped',
+                # 6: 'Ended',
+                # 7: 'Error'}
                 elif key == config.jump_back:
+                    # check to see if the song has ended
                     if (self.song.get_state() != 6):
                         self.changePositionBySecondOffset(
                             -config.jump_time,
-                            self.song.get_position()
+                            self.song.get_position(),
+                            message=False,
+                            forward=False
                         )
                     else:
                         self.song = self.instance.media_player_new()
@@ -164,12 +176,20 @@ class MyApp(object):
                         self.song.play()
                         self.media.parse()
                         self.changePositionBySecondOffset(
-                            -config.jump_time, 1)
+                            -config.jump_time, 
+                            1,
+                            message=False,
+                            forward=False
+                        )
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
                     self.changePositionBySecondOffset(
-                        config.jump_time, self.song.get_position())
+                        config.jump_time, 
+                        self.song.get_position(),
+                        message=False,
+                        forward=True
+                        )
 
                 # pauses and plays the media
                 elif key == config.play_pause:
@@ -295,49 +315,51 @@ class MyApp(object):
         curses.doupdate()
         curses.endwin()
 
-    def nudgeBeginningOrEnding(self):
-        """
-        Method to n
-        """
-        self.song.pause()
-        beginning_input = self.getInput('Beginning? ', 1)
-        if beginning_input.lower() == 'b':
-            self.nudgeForwardOrBackward(self.state.marks[self.markItr].start)
-        elif beginning_input.lower() == 'e':
-            self.nudgeForwardOrBackward(self.state.marks[self.markItr].end)
-        else:
-            self.print_to_screen('Invalid Choice')
-            self.song.play()
-            return None
+    # def nudgeBeginningOrEnding(self):
+    #     """
+    #     Method to n
+    #     """
+    #     self.song.pause()
+    #     beginning_input = self.getInput('Beginning? ', 1)
+    #     if beginning_input.lower() == 'b':
+    #         self.nudgeForwardOrBackward(self.state.marks[self.markItr].start)
+    #     elif beginning_input.lower() == 'e':
+    #         self.nudgeForwardOrBackward(self.state.marks[self.markItr].end)
+    #     else:
+    #         self.print_to_screen('Invalid Choice')
+    #         self.song.play()
+    #         return None
 
-    def nudgeForwardOrBackward(self, mark):
-        forward_input = self.getInput('Forward? ', 1)
-        if forward_input == '':
-            self.nudgeBlock(mark, True)
-        elif forward_input == '-':
-            self.nudgeBlock(mark, False)
-        else:
-            self.print_to_screen('Invalid Choice')
-            self.song.play()
-            return None
+    # def nudgeForwardOrBackward(self, mark):
+    #     forward_input = self.getInput('Forward? ', 1)
+    #     if forward_input == '':
+    #         self.nudgeBlock(mark, True)
+    #     elif forward_input == '-':
+    #         self.nudgeBlock(mark, False)
+    #     else:
+    #         self.print_to_screen('Invalid Choice')
+    #         self.song.play()
+    #         return None
 
-    def nudgeAmount(self, mark, forward):
-        pass
+    # def nudgeAmount(self, mark, forward):
+    #     pass
 
-    def nudgeBlock(self, mark, nudgeForward, nudgeIncrement=config.nudge_increment):
-        """
-        Method to return a value to assign to the nudged value of a block beginning or end.
+    # def nudgeBlock(self, mark, nudgeForward, nudgeIncrement=config.nudge_increment):
+    #     """
+    #     Method to return a value to assign to the nudged value of a block beginning or end.
 
-        Arguments:
-        mark: float - The current position to be nudged.
-        nudgeIncrement: float - The amount to nudge the current position. If not passed, uses the default from the config.
-        nudgeForward: boolean - used to decide if the nudge is a positive or negative value.
-        """
-        if nudgeForward:
-            mark += nudgeIncrement
-        else:
-            mark -= nudgeIncrement
-        # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
+    #     Arguments:
+    #     mark: float - The current position to be nudged.
+    #     nudgeIncrement: float - The amount to nudge the current position. If not passed, uses the default from the config.
+    #     nudgeForward: boolean - used to decide if the nudge is a positive or negative value.
+    #     """
+    #     if nudgeForward:
+    #         mark += nudgeIncrement
+    #     else:
+    #         mark -= nudgeIncrement
+    #     # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
+
+
 
     def write_state_information(self):
         """
@@ -381,6 +403,31 @@ class MyApp(object):
             self.log(ex)
 
     def begining_ending_block(self, start):
+        """
+        Method to make a block starting from the begining of the file to the current position or from the current position to the end of the file
+
+        Arguments:
+        start: Boolean - if True, then the block is from the begining to the current position, if False -  from the current position to the end of the file
+        """
+        try:
+            if self.current_mark:
+                self.print_to_screen('There is unfinished block')
+            else:
+                mark = Mark(position=self.song.get_position())
+                if start:
+                    mark.start = 0
+                else:
+                    mark.end = 1
+                self.overwriteOverlaps(mark)
+                self.state.marks = sorted(
+                    self.state.marks, key=itemgetter('start'))
+                self.markItr += 1
+                self.print_to_screen('saved')
+                self.write_state_information()
+        except Exception as ex:
+            self.log(ex)
+
+    def begining_ending_block_old(self, start):
         """
         Method to make a block starting from the begining of the file to the current position or from the current position to the end of the file
 
@@ -460,23 +507,6 @@ class MyApp(object):
         self.window.refresh()
 
         curses.doupdate()
-
-    def ffprobe_get_length(self, input_file):
-        """
-        Method to get the length of the file - defunct
-
-        Arguments - input_file - string - the path and file name of the file
-        """
-        # ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1
-        command = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-                   '-of', 'default=noprint_wrappers=1:nokey=1', input_file]
-        result = subprocess.run(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        return float(result.stdout)
-
-
-# ffprobe -v error -show_entries format=duration','-of default=noprint_wrappers=1:nokey=1
-
 
     def get_file_length(self, input_file):
         """
@@ -612,6 +642,22 @@ class MyApp(object):
             sounds.error_sound(self.volume)
             self.print_to_screen('not in edit mode - saveCurrentMark()')
 
+    def checkForOverlap(self, markToBeChecked):
+        """
+        Method to check if a proposed black will overlap and existing block
+
+        Arguments:
+        markToBeChecked - mark - the new mark that may overlap another.
+
+        Returns an array of iterators of the marks that it overlaps 
+        """
+        results = []
+        for itr,mark in enumerate(self.state.marks):
+            if mark.over(markToBeChecked):
+                results.append(itr)
+
+        return results
+
     def check_for_overlap(self, position, index=None):
         """
         Method to check if the proposed position for a new block beginning or
@@ -652,6 +698,7 @@ class MyApp(object):
         overlaps with any of the other blocks. If it does not, it creates a new
         block and sets the start position at the current position
         """
+        # self.log('startMakrPosition')
         try:
             if self.current_mark and self.current_mark.is_editing:
                 self.current_mark.start = self.song.get_position()
@@ -660,6 +707,7 @@ class MyApp(object):
                 self.current_mark.start = self.song.get_position()
 
         except Exception as ex:
+            sounds.error_sound(self.volume)
             self.log(ex)
 
     def endMarkPosition(self):
@@ -677,14 +725,28 @@ class MyApp(object):
         position at the current position
         """
         try:
-            if self.current_mark and self.current_mark.end < 0:
-                self.current_mark.end = self.song.get_position()
+            if self.current_mark:
+                if self.current_mark.end < 0 or self.current_mark.is_editing:
+                    self.current_mark.end = self.song.get_position()
+                    self.current_mark.is_editing = False
+                    self.overwriteOverlaps(self.current_mark)
+                    self.current_mark = None
+                    self.write_state_information()
+                else:
+                    self.print_to_screen('Action not possible at this time.')
+
             else:
-                self.current_mark = Mark()
-                self.current_mark.start = self.song.get_position()
+                self.print_to_screen("Can't end block that hasn't been started")
 
         except Exception as ex:
             self.log(ex)
+
+    def overwriteOverlaps(self, cur_mark):
+        itrs = self.checkForOverlap(cur_mark)
+        itrs.sort(reverse=True)
+        for i in itrs:
+            self.state.marks.pop(i)
+        self.state.marks.append(cur_mark)
 
     def check_for_null_blocks(self):
         """
@@ -749,6 +811,23 @@ class MyApp(object):
 
     def cycleThroughMarks(self, edit=False):
         """
+        Method to move the playback through the existing blocks
+
+        Arguments:
+        edit - boolean - True if the intent is to edit the blocks and False if
+        not. Default is False.
+        """
+        if edit:
+            self.state.marks[self.markItr].is_editing = True
+
+        self.changePositionBySecondOffset(
+            config.preview_time, self.state.marks[self.markItr].start
+        )
+        self.print_to_screen('Block {}'.format(self.markItr + 1))
+        self.updateIters()
+
+    def cycleThroughMarks_old(self, edit=False):
+        """
         Method to move the playback through the existing blocks.
 
         Arguments:
@@ -779,7 +858,7 @@ class MyApp(object):
             self.blockItrPrev = self.markItr
             self.markItr = 0
 
-    def changePositionBySecondOffset(self, sec_offset, cur_pos):
+    def changePositionBySecondOffset(self, sec_offset, cur_pos, message=True, forward=True):
         """
         Method to change the current position of the playing audio
 
@@ -788,32 +867,45 @@ class MyApp(object):
         a negative value will go back while a posititve value will move formard
         curr_postion - float - the vlc position marker - this is a value between
         0 and 1.
+        message - boolean - designates that the quick 5 second jump is calling this
+        function and will keep it from printing out the message
+        forward - boolean - designates the jump direction
         """
         try:
-            cur_sec = round(cur_pos * self.state.duration) + \
-                (sec_offset * 1000)
-            new_pos = cur_sec / self.state.duration
-            # self.log(new_pos)
-            if sec_offset < 0:
-                if new_pos < 0:
-                    new_pos = 0
-                    # print out remaining time instead of jumping to end
-                    left = self.timeStamp(
-                        self.state.duration, self.song.get_position())
-                    # self.window.addstr(0,0,"the most you can jump backwards is " + left)
-                    self.print_to_screen(
-                        'the most you can jump backwoards is {}'.format(left))
-                    # return None
-            else:
-                if new_pos > 1:
-                    new_pos = 1
-                    # print out remaining time instead of jumping to end
-                    left = self.timeStamp(
-                        self.state.duration, 1 - self.song.get_position())
-                    self.print_to_screen(
-                        'the most you can jump forwards is {}'.format(left))
-                    # self.window.addstr(0,0,"the most you can jump forward is " + left)
-                    # return None
+            pos_offset = (sec_offset * 1000) / self.state.duration
+            # cur_sec = round(cur_pos * self.state.duration) + (sec_offset * 1000)
+            # new_pos = cur_sec / self.state.duration
+
+            new_pos = cur_pos + pos_offset
+
+            for itr,mark in enumerate(self.state.marks):
+                if mark.overlap(new_pos):
+                    if forward:
+                        new_pos = mark.end + (new_pos - mark.start)
+                    else:
+                        new_pos = mark.start - (mark.end - new_pos)
+                    self.print_to_screen('Block {}'.format(itr + 1))
+            warn_message = ""
+
+
+            if new_pos < 0:
+                new_pos = 0
+                left = self.timeStamp(
+                    self.state.duration,
+                    self.song.get_position()
+                )
+                warn_message = 'the most you can jump backwards is {}'.format(left)
+
+            if new_pos > 1:
+                new_pos = 1
+                left = self.timeStamp(
+                    self.state.duration, 1 - self.song.get_position())
+                warn_message = 'the most you can jump forwards is {}'.format(left)
+
+
+            if message:
+                self.print_to_screen(warn_message)
+
             self.song.set_position(new_pos)
             self.song.play()
         except Exception as ex:

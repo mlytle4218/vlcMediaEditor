@@ -60,6 +60,15 @@ class Mark():
         """
         return self.start <= position <= self.end
 
+    def over(self, other):
+        """
+        Method to check if a proposed other mark will engulf this existing mark
+
+        Arguments:
+        other - mark - the proposed new mark location
+        """
+        return other.start <= self.start and self.end <= other.end
+
 
     # def sortMarks(self):
     #     """
