@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 
 import time
 import threading
+import sounds
 
 class WT(threading.Thread):
     """
@@ -17,6 +18,7 @@ class WT(threading.Thread):
 
         self.current = 0
         self.difference = 0.0025
+        # self.difference = 0.005
 
     def run(self):
         # As long as we weren't asked to stop, try to take new tasks from the
@@ -37,24 +39,23 @@ class WT(threading.Thread):
                     for itr,each in enumerate(self.song.state.marks):
                         if abs(self.current - self.last) < self.difference: 
                             if self.song.is_editing:
-                                if self.last <= each.start <= self.current:
-                                    # self.song.print_to_screen('Block {} start'.format(itr + 1))
-                                    self.song.log('Block {} start'.format(itr + 1))
-                                    if each.start != 0:
-                                        self.song.song.pause()
-                                        time.sleep(1)
-                                        self.song.song.play()
-                                elif self.last <= each.end <= self.current:
-                                    # self.song.print_to_screen('Block {} end'.format(itr + 1))
-                                    self.song.log('Block {} end'.format(itr + 1))
-
-                                    self.song.song.pause()
-                                    time.sleep(1)
-                                    self.song.song.play()
+                                # self.song.log("{}:{}".format(self.last <= each.end, each.end <= self.current))
+                                res = self.last - self.difference <= each.end <= self.current + self.difference
+                                if res:
+                                    self.song.log(res)
+                                try:
+                                    if self.last <= each.start <= self.current:
+                                        self.song.print_to_screen('Block {} start'.format(itr + 1))
+                                        if each.start != 0:
+                                            self.song.startSound()
+                                    if self.last <= each.end <= self.current:
+                                        self.song.print_to_screen('Block {} end'.format(itr + 1))
+                                        self.song.endSound()
+                                except Exception as ex:
+                                    self.song.log(ex)
                             else:
                                 if self.last <= each.start <= self.current:
                                     # keep the marks iterator up to date on the location in the file
-                                    itr = self.song.state.marks.index(each)
                                     self.song.markItr = itr
                                     self.song.updateIters()
                                     self.song.song.set_position(each.end)
@@ -64,9 +65,10 @@ class WT(threading.Thread):
                                     self.song.song.play()
 
                     
-                    self.last = self.current
+                    
                 except Exception as e:
                     self.song.log(e)
+                self.last = self.current
 
     # used to shut down the worker thread
     def join(self, timeout=None):

@@ -235,9 +235,14 @@ class MyApp(object):
 
                 # Starting with the current markItr cycle through the saved marks
                 # This is for editing
+                # elif key == config.cycle_through_marks_editing:
+                #     try:
+                #         self.cycleThroughMarks(edit=True)
+                #     except Exception as ex:
+                #         self.log(ex)
                 elif key == config.cycle_through_marks_editing:
                     try:
-                        self.cycleThroughMarks(edit=True)
+                        self.is_editing = not self.is_editing
                     except Exception as ex:
                         self.log(ex)
 
@@ -360,7 +365,11 @@ class MyApp(object):
     #         mark -= nudgeIncrement
     #     # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
 
+    def startSound(self):
+        sounds.mark_start_sound()
 
+    def endSound(self):
+        sounds.mark_end_sound()
 
     def write_state_information(self):
         """
@@ -389,13 +398,18 @@ class MyApp(object):
         Method to remove block from self.state.marks
         """
         try:
-            if self.current_mark.is_editing:
-                block_to_be_deleted = self.state.marks.index(self.current_mark)
-                self.state.marks.pop(block_to_be_deleted)
-                self.current_mark = None
-                self.print_to_screen('block deleted')
+            if self.is_editing:
+                self.state.marks.pop(self.markItr)
+                self.print_to_screen('Block deleted')
             else:
                 self.print_to_screen('Not in edit mode')
+            # if self.current_mark.is_editing:
+            #     block_to_be_deleted = self.state.marks.index(self.current_mark)
+            #     self.state.marks.pop(block_to_be_deleted)
+            #     self.current_mark = None
+            #     self.print_to_screen('block deleted')
+            # else:
+            #     self.print_to_screen('Not in edit mode')
         except Exception as ex:
             self.log(ex)
 
@@ -716,8 +730,8 @@ class MyApp(object):
         """
         # self.log('startMakrPosition')
         try:
-            if self.current_mark and self.current_mark.is_editing:
-                self.current_mark.start = self.song.get_position()
+            if self.is_editing:
+                self.state.marks[self.markItr].start = self.song.get_position()
             else:
                 self.current_mark = Mark()
                 self.current_mark.start = self.song.get_position()
@@ -741,16 +755,13 @@ class MyApp(object):
         position at the current position
         """
         try:
-            if self.current_mark:
-                if self.current_mark.end < 0 or self.current_mark.is_editing:
-                    self.current_mark.end = self.song.get_position()
-                    self.current_mark.is_editing = False
-                    self.overwriteOverlaps(self.current_mark)
-                    self.current_mark = None
-                    self.write_state_information()
-                else:
-                    self.print_to_screen('Action not possible at this time.')
-
+            if self.is_editing:
+                self.state.marks[self.markItr].end = self.song.get_position()
+            elif self.current_mark:
+                self.current_mark.end = self.song.get_position()
+                self.overwriteOverlaps(self.current_mark)
+                self.current_mark = None
+                self.write_state_information()
             else:
                 self.print_to_screen("Can't end block that hasn't been started")
 
@@ -763,6 +774,7 @@ class MyApp(object):
         for i in itrs:
             self.state.marks.pop(i)
         self.state.marks.append(cur_mark)
+        self.state.marks = sorted(self.state.marks, key=itemgetter('start'))
 
     def check_for_null_blocks(self):
         """
@@ -833,8 +845,7 @@ class MyApp(object):
         edit - boolean - True if the intent is to edit the blocks and False if
         not. Default is False.
         """
-        if edit:
-            self.is_editing = True
+        # self.is_editing = edit
         
         if self.is_editing:
             if self.cycle_start:
@@ -845,7 +856,13 @@ class MyApp(object):
                 self.print_to_screen('Block {} start'.format(self.markItr + 1))
                 self.cycle_start = False
             else:
-                self.changePositionBySecondOffset(config.preview_time,self.state.marks[self.markItr].end)
+                self.changePositionBySecondOffset(
+                    config.preview_time,
+                    self.state.marks[self.markItr].end
+                )
+                self.log(self.poll_thread.last)
+                self.log(self.poll_thread.current)
+
                 self.print_to_screen('Block {} end'.format(self.markItr + 1))
                 self.cycle_start = True
                 self.updateIters()
@@ -856,25 +873,6 @@ class MyApp(object):
             )
             self.print_to_screen('Block {}'.format(self.markItr + 1))
             self.updateIters()
-
-        # if edit:
-        #     mk = self.state.marks[self.markItr]
-        #     mk.is_editing = True
-        #     self.current_mark = mk
-
-        # if self.cycle_start:
-        #     self.changePositionBySecondOffset(
-        #         config.preview_time, self.state.marks[self.markItr].start
-        #     )
-        #     self.print_to_screen('Block {} start'.format(self.markItr + 1))
-        #     self.cycle_start = False
-        # else:
-        #     self.changePositionBySecondOffset(
-        #         config.preview_time, self.state.marks[self.markItr].end
-        #     )
-        #     self.print_to_screen('Block {} end'.format(self.markItr + 1))
-        #     self.cycle_start = True
-        #     self.updateIters()
 
     def cycleThroughMarks_old(self, edit=False):
         """
@@ -892,12 +890,12 @@ class MyApp(object):
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].start)
             self.cycle_start = False
-            # self.print_to_screen('Block {} start'.format(self.markItr+1))
+            self.print_to_screen('Block {} start'.format(self.markItr+1))
         else:
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].end)
             self.cycle_start = True
-            # self.print_to_screen('Block {} end'.format(self.markItr+1))
+            self.print_to_screen('Block {} end'.format(self.markItr+1))
             self.updateIters()
 
     def updateIters(self):
@@ -923,18 +921,16 @@ class MyApp(object):
         """
         try:
             pos_offset = (sec_offset * 1000) / self.state.duration
-            # cur_sec = round(cur_pos * self.state.duration) + (sec_offset * 1000)
-            # new_pos = cur_sec / self.state.duration
-
             new_pos = cur_pos + pos_offset
 
             for itr,mark in enumerate(self.state.marks):
-                if mark.overlap(new_pos):
-                    if forward:
-                        new_pos = mark.end + (new_pos - mark.start)
-                    else:
-                        new_pos = mark.start - (mark.end - new_pos)
-                    self.print_to_screen('Block {}'.format(itr + 1))
+                if not self.is_editing:
+                    if mark.overlap(new_pos):
+                        if forward:
+                            new_pos = mark.end + (new_pos - mark.start)
+                        else:
+                            new_pos = mark.start - (mark.end - new_pos)
+                        self.print_to_screen('Block {}'.format(itr + 1))
             warn_message = ""
 
 
@@ -952,14 +948,15 @@ class MyApp(object):
                     self.state.duration, 1 - self.song.get_position())
                 warn_message = 'the most you can jump forwards is {}'.format(left)
 
-            # check to see it is has stopped playing - have to start her again if it is
+            # check to see it is has stopped playing - have to start her again if it has
             if (self.song.get_state() == 6):
                 self.song = self.instance.media_player_new()
                 self.media = self.instance.media_new(
                     self.original_file)
                 self.song.set_media(self.media)
 
-
+            if message:
+                self.print_to_screen(warn_message)
             self.song.set_position(new_pos)
             self.song.play()
         except Exception as ex:
