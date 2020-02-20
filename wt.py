@@ -35,24 +35,33 @@ class WT(threading.Thread):
             if abs(self.current - self.last) > 0:
                 try:
                     for itr,each in enumerate(self.song.state.marks):
-                        if abs(self.current- self.last) < self.difference: 
-                            if self.last <= each.start <= self.current:
-                                self.song.song.set_position(each.end)
-                                self.song.print_to_screen('Block {}'.format(itr + 1))
-                                self.song.song.pause()
-                                # self.song.print_to_screen("Block {} start".format(itr+1))
-                                time.sleep(1)
-                                # # sounds.mark_start_sound(self.song.volume)
-                                self.song.song.play()
-                            # elif self.last <= each.end <= self.current:
-                            #     self.song.print_to_screen("Block {} end".format(itr+1))
-                            #     # sounds.mark_end_sound(self.song.volume)
-                            #     self.song.song.pause()
-                            #     time.sleep(1)
-                            #     self.song.song.play()
-                        elif abs(self.current - self.last) != 0:
-                            pass
-                            # self.song.print_to_screen('big jump')
+                        if abs(self.current - self.last) < self.difference: 
+                            if self.song.is_editing:
+                                if self.last <= each.start <= self.current:
+                                    # self.song.print_to_screen('Block {} start'.format(itr + 1))
+                                    self.song.log('Block {} start'.format(itr + 1))
+                                    if each.start != 0:
+                                        self.song.song.pause()
+                                        time.sleep(1)
+                                        self.song.song.play()
+                                elif self.last <= each.end <= self.current:
+                                    # self.song.print_to_screen('Block {} end'.format(itr + 1))
+                                    self.song.log('Block {} end'.format(itr + 1))
+
+                                    self.song.song.pause()
+                                    time.sleep(1)
+                                    self.song.song.play()
+                            else:
+                                if self.last <= each.start <= self.current:
+                                    # keep the marks iterator up to date on the location in the file
+                                    itr = self.song.state.marks.index(each)
+                                    self.song.markItr = itr
+                                    self.song.updateIters()
+                                    self.song.song.set_position(each.end)
+                                    self.song.print_to_screen('Block {}'.format(itr + 1))
+                                    self.song.song.pause()
+                                    time.sleep(1)
+                                    self.song.song.play()
 
                     
                     self.last = self.current

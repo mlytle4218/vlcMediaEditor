@@ -161,14 +161,7 @@ class MyApp(object):
                 # 7: 'Error'}
                 elif key == config.jump_back:
                     # check to see if the song has ended
-                    if (self.song.get_state() != 6):
-                        self.changePositionBySecondOffset(
-                            -config.jump_time,
-                            self.song.get_position(),
-                            message=False,
-                            forward=False
-                        )
-                    else:
+                    if (self.song.get_state() == 6):
                         self.song = self.instance.media_player_new()
                         self.media = self.instance.media_new(
                             self.original_file)
@@ -181,6 +174,14 @@ class MyApp(object):
                             message=False,
                             forward=False
                         )
+                    else:
+                        self.changePositionBySecondOffset(
+                            -config.jump_time,
+                            self.song.get_position(),
+                            message=False,
+                            forward=False
+                        )
+
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
@@ -833,15 +834,47 @@ class MyApp(object):
         not. Default is False.
         """
         if edit:
-            mk = self.state.marks[self.markItr]
-            mk.is_editing = True
-            self.current_mark = mk
+            self.is_editing = True
+        
+        if self.is_editing:
+            if self.cycle_start:
+                self.changePositionBySecondOffset(
+                    config.preview_time,
+                    self.state.marks[self.markItr].start
+                )
+                self.print_to_screen('Block {} start'.format(self.markItr + 1))
+                self.cycle_start = False
+            else:
+                self.changePositionBySecondOffset(config.preview_time,self.state.marks[self.markItr].end)
+                self.print_to_screen('Block {} end'.format(self.markItr + 1))
+                self.cycle_start = True
+                self.updateIters()
+        else:
+            self.changePositionBySecondOffset(
+                config.preview_time,
+                self.state.marks[self.markItr].start
+            )
+            self.print_to_screen('Block {}'.format(self.markItr + 1))
+            self.updateIters()
 
-        self.changePositionBySecondOffset(
-            config.preview_time, self.state.marks[self.markItr].start
-        )
-        self.print_to_screen('Block {}'.format(self.markItr + 1))
-        self.updateIters()
+        # if edit:
+        #     mk = self.state.marks[self.markItr]
+        #     mk.is_editing = True
+        #     self.current_mark = mk
+
+        # if self.cycle_start:
+        #     self.changePositionBySecondOffset(
+        #         config.preview_time, self.state.marks[self.markItr].start
+        #     )
+        #     self.print_to_screen('Block {} start'.format(self.markItr + 1))
+        #     self.cycle_start = False
+        # else:
+        #     self.changePositionBySecondOffset(
+        #         config.preview_time, self.state.marks[self.markItr].end
+        #     )
+        #     self.print_to_screen('Block {} end'.format(self.markItr + 1))
+        #     self.cycle_start = True
+        #     self.updateIters()
 
     def cycleThroughMarks_old(self, edit=False):
         """
@@ -919,9 +952,13 @@ class MyApp(object):
                     self.state.duration, 1 - self.song.get_position())
                 warn_message = 'the most you can jump forwards is {}'.format(left)
 
+            # check to see it is has stopped playing - have to start her again if it is
+            if (self.song.get_state() == 6):
+                self.song = self.instance.media_player_new()
+                self.media = self.instance.media_new(
+                    self.original_file)
+                self.song.set_media(self.media)
 
-            if message:
-                self.print_to_screen(warn_message)
 
             self.song.set_position(new_pos)
             self.song.play()
