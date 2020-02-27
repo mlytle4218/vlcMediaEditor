@@ -17,6 +17,8 @@ import vlc
 from mark import Mark
 from wt import WT
 
+import json
+
 
 class State():
     def __init__(self):
