@@ -79,13 +79,37 @@ class MyApp(object):
                 self.file_path,
                 self.file_name + "-backup" + self.file_ext
             )
-            shutil.move(
-                os.path.realpath(sys.argv[1]),
-                os.path.join(
-                    self.file_path,
-                    self.file_name_new
+            if self.checkRates(os.path.realpath(sys.argv[1])):
+                shutil.move(
+                    os.path.realpath(sys.argv[1]),
+                    os.path.join(
+                        self.file_path,
+                        self.file_name_new
+                    )
                 )
-            )
+            else:
+                self.print_to_screen('converting file')
+                cmd = ['ffmpeg','-y','-i',os.path.realpath(sys.argv[1]),'-ar','44100',os.path.join(self.file_path, self.file_name_new)]
+                result = subprocess.run(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                lines = result.stdout.decode('utf-8').splitlines()
+                for line in lines:
+                    for word in line.split():
+                        if word.startswith('time='):
+                            time_temp = word.split("=")[1].split(":")
+                            time = int(time_temp[0]) * 3600 + int(time_temp[1]
+                                                                )*60 + round(float(time_temp[2]))
+                
+                quick_state = State()
+                quick_state.marks = []
+                quick_state.duration = time * 1000
+                self.write_state_information()
+                os.remove(os.path.realpath(sys.argv[1]))
+
+
+
+
+
             # self.file_path = self.file_name_new
             self.old_file_name = self.original_file
             self.original_file = self.file_name + "-backup" + self.file_ext
@@ -364,6 +388,21 @@ class MyApp(object):
     #     else:
     #         mark -= nudgeIncrement
     #     # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
+
+    def getBitRate(self,inputFile):
+        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+        result = subprocess.check_output(cmd).decode('utf-8')
+        result = json.loads(result)
+        return int(result['streams'][0]['bit_rate'])
+
+    def getSampleRate(self,inputFile):
+        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+        result = subprocess.check_output(cmd).decode('utf-8')
+        result = json.loads(result)
+        return int(result['streams'][0]['sample_rate'])
+
+    def checkRates(self,inputFile):
+        return self.getBitRate(inputFile) == 128000 and self.getSampleRate ==  44100
 
     def startSound(self):
         sounds.mark_start_sound()

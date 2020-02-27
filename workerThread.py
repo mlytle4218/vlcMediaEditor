@@ -19,6 +19,7 @@ class WorkerThread(threading.Thread):
 
         self.current = 0
         self.difference = 0.0025
+        self.start_time  = time.time()
 
     def log(self, input):
         input = str(input)
@@ -43,9 +44,18 @@ class WorkerThread(threading.Thread):
         while not self.stoprequest.isSet():
             self.current = self.song.song.get_position()
             if abs(self.current - self.last) > 0:
+                # self.song.log(abs(self.current - self.last))
+                # by_time = (( time.time() - self.start_time )*1000)/self.song.state.duration
+                # self.song.log(
+                #     "{:.20f}:{:.20f}:{:.20f}".format(by_time, self.song.song.get_position(), by_time - self.song.song.get_position())
+                #     )
                 try:
                     for itr,each in enumerate(self.song.state.marks):
                         if abs(self.current- self.last) < self.difference : 
+                            self.song.print_to_screen(self.timeStamp(self.song.state.duration, self.current))
+                            # self.song.print_to_screen(str(self.current))
+                            # self.song.log(str(self.current))
+                            # self.song.print_to_screen(str(self.current))
                             if self.last <= each.start <= self.current:
                                 self.song.song.pause()
                                 self.song.print_to_screen("Block {} start".format(itr+1))
@@ -66,7 +76,7 @@ class WorkerThread(threading.Thread):
                     self.log(e)
 
     def timeStamp(self,duration,current):
-        out = duration * current
+        out = duration * current * self.song.bitRateOffset
         try:
             millis = int(out)
             seconds = round((millis/1000) % 60, 3)

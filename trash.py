@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-import math, sys, subprocess, syslog, pickle
+import math, sys, subprocess, syslog, pickle, json, shlex
 
 
 class State():
     marks = []
     duration  = 0 
 
-def milliseconds_to_hms(self, millis):
+def milliseconds_to_hms(millis):
     millis = int(millis)
     seconds = (millis/1000)%60
     part_of_seconds = int((seconds - math.floor(seconds)) * 1000)
     seconds = int(seconds)
     minutes = (millis/(1000*60))%60
     minutes = int(minutes)
-    hours = (millis/(1000*60*60))%24
+    hours = int(millis/(1000*60*60))%24
     time = ''
-    if hours >= 1 and minutes >= 1:
+    if hours >= 1:# and minutes >= 1:
         time = ("{}:{:02d}:{:02d}.{}".format(
             hours, minutes, seconds, part_of_seconds))
     elif minutes >= 1:
@@ -48,19 +48,38 @@ def read_state_information(state_file):
     try:
         state = open(state_file, 'rb')
         out = pickle.load(state)
+        print('Duration {}'.format(out.duration))
+        print(('Duration {}'.format(milliseconds_to_hms(out.duration))))
         for each in out.marks:
-            print("{} to {}".format(each.start, each.end))
+            print("{}  to {}".format(
+                each.start,
+                each.end
+            ))
+            print("{} to {}".format(
+                milliseconds_to_hms(out.duration * each.start), 
+                milliseconds_to_hms(out.duration * each.end)
+                ))
+        
     except IOError:
        print("No file found")
+
+
+# function to find the resolution of the input video file
+def findSampleRate(inputFile):
+    cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+    result = subprocess.check_output(cmd).decode('utf-8')
+    result = json.loads(result)
+    # return result['streams'][0]['sample_rate']
+    return result['streams'][0]['bit_rate']
 
 
 def main():
     print('hi')
     # result = get_file_length(sys.argv[1])
     # print(result)
-    syslog.syslog(syslog.LOG_INFO, "log_info")
+    # syslog.syslog(syslog.LOG_INFO, "log_info")
     # read_state_information(sys.argv[1])
-
+    print(findSampleRate(sys.argv[1]))
 
 
 

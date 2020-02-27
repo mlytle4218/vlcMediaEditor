@@ -17,6 +17,8 @@ import vlc
 from mark import Mark
 from workerThread import WorkerThread
 
+import json
+
 
 class State():
     def __init__(self):
@@ -80,13 +82,33 @@ class MyApp(object):
                 self.file_path,
                 self.file_name + "-backup" + self.file_ext
             )
-            shutil.move(
-                os.path.realpath(sys.argv[1]),
-                os.path.join(
-                    self.file_path,
-                    self.file_name_new
+            if self.checkRates(os.path.realpath(sys.argv[1])):
+                shutil.move(
+                    os.path.realpath(sys.argv[1]),
+                    os.path.join(
+                        self.file_path,
+                        self.file_name_new
+                    )
                 )
-            )
+            else:
+                self.print_to_screen('converting file')
+                cmd = ['ffmpeg','-y','-i',os.path.realpath(sys.argv[1]),'-ar','44100',os.path.join(self.file_path, self.file_name_new)]
+                result = subprocess.run(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                lines = result.stdout.decode('utf-8').splitlines()
+                for line in lines:
+                    for word in line.split():
+                        if word.startswith('time='):
+                            time_temp = word.split("=")[1].split(":")
+                            time = int(time_temp[0]) * 3600 + int(time_temp[1]
+                                                                )*60 + round(float(time_temp[2]))
+                
+                quick_state = State()
+                quick_state.marks = []
+                quick_state.duration = time * 1000
+                self.write_state_information()
+                os.remove(os.path.realpath(sys.argv[1]))
+
             # self.file_path = self.file_name_new
             self.old_file_name = self.original_file
             self.original_file = self.file_name + "-backup" + self.file_ext
@@ -97,19 +119,6 @@ class MyApp(object):
             )
 
         self.read_state_information()
-
-        print('loading file')
-        try:
-            if not self.state.duration:
-                self.state.duration = self.get_file_length(self.original_file)
-                self.write_state_information()
-            self.log("file duration: {}".format(self.state.duration))
-        except Exception:
-            quick_state = State()
-            quick_state.marks = []
-            quick_state.duration = self.get_file_length(self.original_file)
-            self.state = quick_state
-
         
         # this extra step is to set the verbosity of the log errors so they
         # don't print to the screen
@@ -121,7 +130,37 @@ class MyApp(object):
         self.media = self.instance.media_new(self.original_file)
         self.song.set_media(self.media)
 
+        print('loading file')
+        try:
+            self.log("file duration: {}".format(self.state.duration))
+        except Exception as ex:
+            self.log(ex)
+            quick_state = State()
+            quick_state.marks = []
+            quick_state.duration = self.get_file_length(self.original_file)
+            self.log(quick_state.duration)
+            # update the duration to adjust to a different bit rate
+            # bitRate = self.getBitRate(self.original_file)
+            # quick_state.duration *= (128000/bitRate)
+            self.state = quick_state
+            self.log("file duration: {}".format(self.state.duration))
+
+        # self.bitRateOffset = 128000 / self.getBitRate(self.original_file)
+        # self.sampleRateOffset = 44100/ self.getSampleRate(self.original_file)
+
+
+        # self.log(self.bitRateOffset)
+        # self.log(self.sampleRateOffset)
+
+        # self.log(self.bitRateOffset * self.sampleRateOffset)
+
+        # self.offset = self.bitRateOffset * self.sampleRateOffset
+
+        
+        self.write_state_information()
+        
         self.song.play()
+
         self.media.parse()
         self.poll_thread = WorkerThread(self)
         self.poll_thread.start()
@@ -233,9 +272,28 @@ class MyApp(object):
                     self.poll_thread.join()
                     break
 
-                elif key == ord('x'):
-                    self.log(self.position)
-                    self.log(self.song.get_position())
+                # elif key == ord('x'):
+                #     self.log(self.position)
+                #     self.log(self.song.get_position())
+                    # try:
+                    #     bitRate = self.getBitRate(self.original_file)
+                    #     self.state.duration *= (128000/bitRate)
+                    #     self.log(self.state.duration)
+                    #     self.state.duration *= (128000/bitRate)
+                    #     self.write_state_information()
+                    # except Exception as ex:
+                    #     self.log(ex)
+
+                # elif key == ord('v'):
+                #     self.log('v')
+                #     try:
+                #         bitRate = self.getBitRate(self.original_file)
+                #         self.log(bitRate)
+                #         self.state.duration *= (128000/bitRate)
+                #         self.write_state_information()
+                #     except Exception as ex:
+                #         self.log(ex)
+                    
 
                 # Do the actual edits taking the marks and applying them to
                 # to the original file
@@ -252,8 +310,10 @@ class MyApp(object):
 
                 # print the current time formatted to the screen
                 elif key == config.current_time:
+                    # self.log("current position {}".format(self.song.get_position()))
                     c_time = self.timeStamp(
                         self.state.duration, self.song.get_position())
+                    # c_time = str(self.song.get_position())
                     self.print_to_screen(c_time)
 
                 # print the lenght of the file to the screen
@@ -286,6 +346,7 @@ class MyApp(object):
                 elif key == config.list_marks:
                     self.log('current blocks')
                     for mark in self.state.marks:
+                        self.log("{}:{}".format(mark.start, mark.end))
                         self.log(mark.get_time(self.state.duration))
         except KeyboardInterrupt:
             pass
@@ -295,6 +356,24 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
         curses.endwin()
+
+
+    def getBitRate(self,inputFile):
+        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+        result = subprocess.check_output(cmd).decode('utf-8')
+        result = json.loads(result)
+        return int(result['streams'][0]['bit_rate'])
+
+    def getSampleRate(self,inputFile):
+        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+        result = subprocess.check_output(cmd).decode('utf-8')
+        result = json.loads(result)
+        return int(result['streams'][0]['sample_rate'])
+
+    def checkRates(self,inputFile):
+        return self.getBitRate(inputFile) == 128000 and self.getSampleRate ==  44100
+
+    
 
     def nudgeBeginningOrEnding(self):
         """
@@ -388,6 +467,7 @@ class MyApp(object):
         Arguments:
         start: Boolean - if True, then the block is from the begining to the current position, if False -  from the current position to the end of the file
         """
+        position = self.song.get_position()
         try:
             if self.current_mark:
                 sounds.error_sound(self.volume)
@@ -395,13 +475,13 @@ class MyApp(object):
                     'tried to use B or E while an existing block was current - beginning_ending_block()')
                 self.print_to_screen('Overlap with an existing block')
             else:
-                mark = Mark(position=self.song.get_position())
-                if not self.check_for_overlap(self.song.get_position()):
+                mark = Mark(position=position)
+                if not self.check_for_overlap(position):
                     if start:
                         mark.start = 0
-                        mark.end = self.song.get_position()
+                        mark.end = position
                     else:
-                        mark.start = self.song.get_position()
+                        mark.start = position
                         mark.end = 1
                     self.state.marks.append(mark)
                     self.state.marks = sorted(
@@ -670,30 +750,31 @@ class MyApp(object):
         overlaps with any of the other blocks. If it does not, it creates a new
         block and sets the start position at the current position
         """
+        position = self.song.get_position()
         try:
             # is in edit mode
             if self.is_editing:
                 # check if there is overlap with any other blocks error sound if there is
-                if self.check_for_overlap(self.song.get_position(), index=self.blockItrPrev):
+                if self.check_for_overlap(position, index=self.blockItrPrev):
                     sounds.error_sound(self.volume)
                     self.print_to_screen('overlap')
                     self.log(
                         'tried to create a block that overlaps another exisitng block - startMarkPosition() - is_editing')
                 else:
-                    self.current_mark.start = self.song.get_position()
+                    self.current_mark.start = position
                     sounds.mark_start_sound(self.volume)
                     self.print_to_screen(
                         'edited beginning of block {}'.format(len(self.state.marks)))
                     self.write_state_information()
             # is in new mode
             else:
-                if self.check_for_overlap(self.song.get_position()):
+                if self.check_for_overlap(position):
                     sounds.error_sound(self.volume)
                     self.log(
                         'tried to create a block that overlaps another exisitng block - startMarkPosition() - !is_editing')
                     self.print_to_screen('overlap')
                 else:
-                    self.current_mark = Mark(position=self.song.get_position())
+                    self.current_mark = Mark(position=position)
                     self.state.marks.append(self.current_mark)
                     sounds.mark_start_sound(self.volume)
                     self.print_to_screen(
@@ -922,8 +1003,8 @@ class MyApp(object):
                     left = self.timeStamp(
                         self.state.duration, self.song.get_position())
                     # self.window.addstr(0,0,"the most you can jump backwards is " + left)
-                    self.print_to_screen(
-                        'the most you can jump backwoards is {}'.format(left))
+                    # self.print_to_screen(
+                    #     'the most you can jump backwards is {}'.format(left))
                     # return None
             else:
                 if new_pos > 1:
@@ -942,8 +1023,10 @@ class MyApp(object):
 
     def timeStamp(self,duration,current):
         out = duration * current
+        # out = duration * current * self.offset
         try:
-            millis = int(out)
+            millis = (out)
+            # millis = int(out)
             seconds = round((millis/1000) % 60, 3)
             minutes = (millis/(1000*60)) % 60
             minutes = int(minutes)
