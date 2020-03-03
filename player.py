@@ -68,19 +68,19 @@ class MyApp(object):
         # if opening a backup, look for a state file with the original name
         self.state_file_name = ""
         self.old_file_name = ""
-        if self.file_name.endswith('-backup'):
+        if self.file_name.endswith('-original'):
             self.state_file_name = os.path.join(
                 self.file_path,
-                self.file_name.replace('-backup', '') + ".state"
+                self.file_name.replace('-original', '') + ".state"
             )
             self.old_file_name = os.path.join(
                 self.file_path,
-                self.file_name.replace('-backup','') + self.file_ext
+                self.file_name.replace('-original','') + self.file_ext
             )
         else:
             self.file_name_new = os.path.join(
                 self.file_path,
-                self.file_name + "-backup" + self.file_ext
+                self.file_name + "-original" + self.file_ext
             )
             if self.checkRates(os.path.realpath(sys.argv[1])):
                 shutil.move(
@@ -111,7 +111,7 @@ class MyApp(object):
 
             # self.file_path = self.file_name_new
             self.old_file_name = self.original_file
-            self.original_file = self.file_name + "-backup" + self.file_ext
+            self.original_file = self.file_name + "-original" + self.file_ext
 
             self.state_file_name = os.path.join(
                 self.file_path, 
