@@ -52,7 +52,7 @@ class WorkerThread(threading.Thread):
                 try:
                     for itr,each in enumerate(self.song.state.marks):
                         if abs(self.current- self.last) < self.difference : 
-                            self.song.print_to_screen(self.timeStamp(self.song.state.duration, self.current))
+                            # self.song.print_to_screen(self.timeStamp(self.song.state.duration, self.current))
                             # self.song.print_to_screen(str(self.current))
                             # self.song.log(str(self.current))
                             # self.song.print_to_screen(str(self.current))
@@ -76,7 +76,7 @@ class WorkerThread(threading.Thread):
                     self.log(e)
 
     def timeStamp(self,duration,current):
-        out = duration * current * self.song.bitRateOffset
+        out = duration * current # * self.song.bitRateOffset
         try:
             millis = int(out)
             seconds = round((millis/1000) % 60, 3)

@@ -41,8 +41,8 @@ class WT(threading.Thread):
                             if self.song.is_editing:
                                 # self.song.log("{}:{}".format(self.last <= each.end, each.end <= self.current))
                                 res = self.last - self.difference <= each.end <= self.current + self.difference
-                                if res:
-                                    self.song.log(res)
+                                # if res:
+                                #     self.song.log(res)
                                 try:
                                     if self.last <= each.start <= self.current:
                                         self.song.print_to_screen('Block {} start'.format(itr + 1))
@@ -66,8 +66,8 @@ class WT(threading.Thread):
 
                     
                     
-                except Exception as e:
-                    self.song.log(e)
+                except Exception as ex:
+                    self.song.log(ex)
                 self.last = self.current
 
     # used to shut down the worker thread

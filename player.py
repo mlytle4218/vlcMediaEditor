@@ -853,7 +853,10 @@ class MyApp(object):
                     self.current_mark = None
                     self.print_to_screen(
                         'ending block {}'.format(len(self.state.marks)))
-                    self.state.marks.sort()
+                    self.state.marks = sorted(
+                        self.state.marks,
+                        key=itemgetter('start')
+                        )
                     self.write_state_information()
 
         except Exception as ex:
@@ -965,12 +968,12 @@ class MyApp(object):
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].start)
             self.cycle_start = False
-            # self.print_to_screen('Block {} start'.format(self.markItr+1))
+            self.print_to_screen('Block {} start'.format(self.markItr+1))
         else:
             self.changePositionBySecondOffset(
                 config.preview_time, self.state.marks[self.markItr].end)
             self.cycle_start = True
-            # self.print_to_screen('Block {} end'.format(self.markItr+1))
+            self.print_to_screen('Block {} end'.format(self.markItr+1))
             self.updateIters()
 
     def updateIters(self):
