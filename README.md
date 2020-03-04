@@ -4,6 +4,7 @@ This is for editing audio and video by audio only. It relies on videoLan to play
 
 
 ## Requirements
-[VideoLan](https://www.videolan.org/index.html) video player  
-[ffmpeg](https://www.ffmpeg.org/)  
-[ncurses](https://linux.die.net/man/3/ncurses)
+- [Python](https://www.python.org/) 3.6 or later.
+- [VideoLan](https://www.videolan.org/index.html) video player  
+- [ffmpeg](https://www.ffmpeg.org/)  
+- [ncurses](https://linux.die.net/man/3/ncurses)
