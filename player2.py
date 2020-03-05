@@ -77,6 +77,9 @@ class MyApp(object):
                 self.file_name.replace('-original','') + self.file_ext
             )
         else:
+            # check to see if its our data input
+            if self.file_ext == '.data':
+                self.file_ext = ".mp4"
             self.file_name_new = os.path.join(
                 self.file_path,
                 self.file_name + "-original" + self.file_ext
@@ -395,13 +398,19 @@ class MyApp(object):
         cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
         result = subprocess.check_output(cmd).decode('utf-8')
         result = json.loads(result)
-        return int(result['streams'][0]['bit_rate'])
+        for stream in result['streams']:
+            if stream['codec_type'] =="audio":
+                return int(stream['bit_rate'])
+        # return int(result['streams'][0]['bit_rate'])
 
     def getSampleRate(self,inputFile):
         cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
         result = subprocess.check_output(cmd).decode('utf-8')
         result = json.loads(result)
-        return int(result['streams'][0]['sample_rate'])
+        for stream in result['streams']:
+            if stream['codec_type'] =="audio":
+                return int(stream['sample_rate'])
+        # return int(result['streams'][0]['sample_rate'])
 
     def checkRates(self,inputFile):
         return self.getBitRate(inputFile) == 128000 and self.getSampleRate ==  44100
