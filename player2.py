@@ -956,7 +956,7 @@ class MyApp(object):
             self.blockItrPrev = self.markItr
             self.markItr = 0
 
-    def changePositionBySecondOffset(self, sec_offset, cur_pos, message=True, forward=True):
+    def changePositionBySecondOffset_new(self, sec_offset, cur_pos, message=True, forward=True):
         """
         Method to change the current position of the playing audio
 
@@ -970,8 +970,17 @@ class MyApp(object):
         forward - boolean - designates the jump direction
         """
         try:
+
+            if (self.song.get_state() == 6):
+                # Song is in a stopped position
+                pass
+            else:
+                # Song is in a play position
+                pass
+
             pos_offset = (sec_offset * 1000) / self.state.duration
             new_pos = cur_pos + pos_offset
+            self.log(new_pos)
 
             for itr,mark in enumerate(self.state.marks):
                 if not self.is_editing:
@@ -993,7 +1002,9 @@ class MyApp(object):
                 warn_message = 'the most you can jump backwards is {}'.format(left)
 
             if new_pos > 1:
+                self.log('past one')
                 new_pos = 1
+                self.log(new_pos)
                 left = self.timeStamp(
                     self.state.duration, 1 - self.song.get_position())
                 warn_message = 'the most you can jump forwards is {}'.format(left)
@@ -1004,11 +1015,72 @@ class MyApp(object):
                 self.media = self.instance.media_new(
                     self.original_file)
                 self.song.set_media(self.media)
+                self.song.set_position(new_pos)
 
             if message:
                 self.print_to_screen(warn_message)
-            self.song.set_position(new_pos)
             self.song.play()
+            self.song.set_position(new_pos)
+        except Exception as ex:
+            self.log(ex)
+
+    def changePositionBySecondOffset(self, sec_offset, cur_pos, message=True, forward=True):
+        """
+        Method to change the current position of the playing audio
+
+        Arguments:
+        sec_offset - float - how many seconds to change from the current position,
+        a negative value will go back while a posititve value will move formard
+        curr_postion - float - the vlc position marker - this is a value between
+        0 and 1.
+        message - boolean - designates that the quick 5 second jump is calling this
+        function and will keep it from printing out the message
+        forward - boolean - designates the jump direction
+        """
+        try:
+            pos_offset = (sec_offset * 1000) / self.state.duration
+            new_pos = cur_pos + pos_offset
+            self.log(new_pos)
+
+            for itr,mark in enumerate(self.state.marks):
+                if not self.is_editing:
+                    if mark.overlap(new_pos):
+                        if forward:
+                            new_pos = mark.end + (new_pos - mark.start)
+                        else:
+                            new_pos = mark.start - (mark.end - new_pos)
+                        self.print_to_screen('Block {}'.format(itr + 1))
+            warn_message = ""
+
+
+            if new_pos < 0:
+                new_pos = 0
+                left = self.timeStamp(
+                    self.state.duration,
+                    self.song.get_position()
+                )
+                warn_message = 'the most you can jump backwards is {}'.format(left)
+
+            if new_pos > 1:
+                self.log('past one')
+                new_pos = 1
+                self.log(new_pos)
+                left = self.timeStamp(
+                    self.state.duration, 1 - self.song.get_position())
+                warn_message = 'the most you can jump forwards is {}'.format(left)
+
+            # check to see it is has stopped playing - have to start her again if it has
+            if (self.song.get_state() == 6):
+                self.song = self.instance.media_player_new()
+                self.media = self.instance.media_new(
+                    self.original_file)
+                self.song.set_media(self.media)
+                self.song.set_position(new_pos)
+
+            if message:
+                self.print_to_screen(warn_message)
+            self.song.play()
+            self.song.set_position(new_pos)
         except Exception as ex:
             self.log(ex)
 
