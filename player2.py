@@ -179,47 +179,47 @@ class MyApp(object):
                     self.update_rate(-config.play_speed_rate)
 
                 # Jumps back 5 seconds
-                # get_state() 
-                # {0: 'NothingSpecial',
-                # 1: 'Opening',
-                # 2: 'Buffering',
-                # 3: 'Playing',
-                # 4: 'Paused',
-                # 5: 'Stopped',
-                # 6: 'Ended',
-                # 7: 'Error'}
                 elif key == config.jump_back:
                     # check to see if the song has ended
-                    if (self.song.get_state() == 6):
-                        self.song = self.instance.media_player_new()
-                        self.media = self.instance.media_new(
-                            self.original_file)
-                        self.song.set_media(self.media)
-                        self.song.play()
-                        self.media.parse()
-                        self.changePositionBySecondOffset(
-                            -config.jump_time, 
-                            1,
-                            message=False,
-                            forward=False
-                        )
-                    else:
-                        self.changePositionBySecondOffset(
-                            -config.jump_time,
-                            self.song.get_position(),
-                            message=False,
-                            forward=False
-                        )
+                    self.changePositionBySecondOffset_new(
+                        -config.jump_time,
+                        message=False,
+                        forward=False
+                    )
+                    # if (self.song.get_state() == 6):
+                    #     self.song = self.instance.media_player_new()
+                    #     self.media = self.instance.media_new(self.original_file)
+                    #     self.song.set_media(self.media)
+                    #     self.song.play()
+                    #     self.media.parse()
+                    #     self.changePositionBySecondOffset(
+                    #         -config.jump_time, 
+                    #         1,
+                    #         message=False,
+                    #         forward=False
+                    #     )
+                    # else:
+                    #     self.changePositionBySecondOffset(
+                    #         -config.jump_time,
+                    #         self.song.get_position(),
+                    #         message=False,
+                    #         forward=False
+                    #     )
 
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
-                    self.changePositionBySecondOffset(
-                        config.jump_time, 
-                        self.song.get_position(),
+                    self.changePositionBySecondOffset_new(
+                        config.jump_time,
                         message=False,
                         forward=True
-                        )
+                    )
+                    # self.changePositionBySecondOffset(
+                    #     config.jump_time, 
+                    #     self.song.get_position(),
+                    #     message=False,
+                    #     forward=True
+                    #     )
 
                 # pauses and plays the media
                 elif key == config.play_pause:
@@ -349,50 +349,6 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
         curses.endwin()
-
-    # def nudgeBeginningOrEnding(self):
-    #     """
-    #     Method to n
-    #     """
-    #     self.song.pause()
-    #     beginning_input = self.getInput('Beginning? ', 1)
-    #     if beginning_input.lower() == 'b':
-    #         self.nudgeForwardOrBackward(self.state.marks[self.markItr].start)
-    #     elif beginning_input.lower() == 'e':
-    #         self.nudgeForwardOrBackward(self.state.marks[self.markItr].end)
-    #     else:
-    #         self.print_to_screen('Invalid Choice')
-    #         self.song.play()
-    #         return None
-
-    # def nudgeForwardOrBackward(self, mark):
-    #     forward_input = self.getInput('Forward? ', 1)
-    #     if forward_input == '':
-    #         self.nudgeBlock(mark, True)
-    #     elif forward_input == '-':
-    #         self.nudgeBlock(mark, False)
-    #     else:
-    #         self.print_to_screen('Invalid Choice')
-    #         self.song.play()
-    #         return None
-
-    # def nudgeAmount(self, mark, forward):
-    #     pass
-
-    # def nudgeBlock(self, mark, nudgeForward, nudgeIncrement=config.nudge_increment):
-    #     """
-    #     Method to return a value to assign to the nudged value of a block beginning or end.
-
-    #     Arguments:
-    #     mark: float - The current position to be nudged.
-    #     nudgeIncrement: float - The amount to nudge the current position. If not passed, uses the default from the config.
-    #     nudgeForward: boolean - used to decide if the nudge is a positive or negative value.
-    #     """
-    #     if nudgeForward:
-    #         mark += nudgeIncrement
-    #     else:
-    #         mark -= nudgeIncrement
-    #     # mark += nudgeIncrement if nudgeForward else mark -= nudgeIncrement
 
     def getBitRate(self,inputFile):
         cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
@@ -682,9 +638,8 @@ class MyApp(object):
             if reverse:
                 seconds *= -1
 
-            self.changePositionBySecondOffset(
-                seconds,
-                self.song.get_position()
+            self.changePositionBySecondOffset_new(
+                seconds
             )
         self.song.play()
 
@@ -917,9 +872,9 @@ class MyApp(object):
                 self.cycle_start = True
                 self.updateIters()
         else:
-            self.changePositionBySecondOffset(
+            self.changePositionBySecondOffset_new(
                 config.preview_time,
-                self.state.marks[self.markItr].start
+                cur_pos=self.state.marks[self.markItr].start
             )
             self.print_to_screen('Block {}'.format(self.markItr + 1))
             self.updateIters()
@@ -956,31 +911,46 @@ class MyApp(object):
             self.blockItrPrev = self.markItr
             self.markItr = 0
 
-    def changePositionBySecondOffset_new(self, sec_offset, cur_pos, message=True, forward=True):
+    def changePositionBySecondOffset_new(self, sec_offset, cur_pos=None, message=True, forward=True):
         """
         Method to change the current position of the playing audio
 
         Arguments:
         sec_offset - float - how many seconds to change from the current position,
         a negative value will go back while a posititve value will move formard
-        curr_postion - float - the vlc position marker - this is a value between
-        0 and 1.
         message - boolean - designates that the quick 5 second jump is calling this
         function and will keep it from printing out the message
         forward - boolean - designates the jump direction
         """
         try:
-
+            pos_offset = (sec_offset * 1000) / self.state.duration
+            new_pos = 1
             if (self.song.get_state() == 6):
+                if cur_pos is not None:
+                    new_pos += pos_offset
+                else:
+                    new_pos = cur_pos + pos_offset
+                # get_state() 
+                # {0: 'NothingSpecial',
+                # 1: 'Opening',
+                # 2: 'Buffering',
+                # 3: 'Playing',
+                # 4: 'Paused',
+                # 5: 'Stopped',
+                # 6: 'Ended',
+                # 7: 'Error'}
                 # Song is in a stopped position
-                pass
+                self.song = self.instance.media_player_new()
+                self.media = self.instance.media_new(self.original_file)
+                self.song.set_media(self.media)
+                self.song.set_position(new_pos)
+                self.song.play()
             else:
                 # Song is in a play position
-                pass
-
-            pos_offset = (sec_offset * 1000) / self.state.duration
-            new_pos = cur_pos + pos_offset
-            self.log(new_pos)
+                if cur_pos is not None:
+                    new_pos = cur_pos + pos_offset
+                else:
+                    new_pos = self.song.get_position() + pos_offset
 
             for itr,mark in enumerate(self.state.marks):
                 if not self.is_editing:
@@ -1002,20 +972,12 @@ class MyApp(object):
                 warn_message = 'the most you can jump backwards is {}'.format(left)
 
             if new_pos > 1:
-                self.log('past one')
                 new_pos = 1
-                self.log(new_pos)
                 left = self.timeStamp(
-                    self.state.duration, 1 - self.song.get_position())
+                    self.state.duration,
+                    1 - self.song.get_position()
+                    )
                 warn_message = 'the most you can jump forwards is {}'.format(left)
-
-            # check to see it is has stopped playing - have to start her again if it has
-            if (self.song.get_state() == 6):
-                self.song = self.instance.media_player_new()
-                self.media = self.instance.media_new(
-                    self.original_file)
-                self.song.set_media(self.media)
-                self.song.set_position(new_pos)
 
             if message:
                 self.print_to_screen(warn_message)
