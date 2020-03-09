@@ -737,9 +737,11 @@ class MyApp(object):
         try:
             if self.is_editing:
                 self.state.marks[self.markItr].start = self.song.get_position()
+                self.print_to_screen('Block {} start edited'.format(len(self.state.marks)+1))
             else:
                 self.current_mark = Mark()
                 self.current_mark.start = self.song.get_position()
+                self.print_to_screen('Starting block {}'.format(len(self.state.marks)+1))
 
         except Exception as ex:
             sounds.error_sound(self.volume)
@@ -762,8 +764,10 @@ class MyApp(object):
         try:
             if self.is_editing:
                 self.state.marks[self.markItr].end = self.song.get_position()
+                self.print_to_screen('Block {} end edited'.format(len(self.state.marks)+1))
             elif self.current_mark:
                 self.current_mark.end = self.song.get_position()
+                self.print_to_screen('Ending block {}'.format(len(self.state.marks)+1))
                 self.overwriteOverlaps(self.current_mark)
                 self.current_mark = None
                 self.write_state_information()
