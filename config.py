@@ -13,6 +13,8 @@ jump_forward_desc = 'Right Arrow'
 play_pause = ord(' ')
 play_pause_desc = 'Space bar'
 jump_specific = ord('j')
+jump_to_start = curses.KEY_F3
+jump_to_end = curses.KEY_F4
 
 # Block creation and editing
 mark_create_new = ord('n')

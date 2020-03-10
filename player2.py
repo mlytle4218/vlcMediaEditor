@@ -262,13 +262,6 @@ class MyApp(object):
                     except Exception as ex:
                         self.log(ex)
 
-                # Starting with the current markItr cycle through the saved marks
-                # This is for editing
-                # elif key == config.cycle_through_marks_editing:
-                #     try:
-                #         self.cycleThroughMarks(edit=True)
-                #     except Exception as ex:
-                #         self.log(ex)
                 elif key == config.cycle_through_marks_editing:
                     try:
                         self.is_editing = not self.is_editing
@@ -330,6 +323,12 @@ class MyApp(object):
                 elif key == config.block_till_end:
                     self.begining_ending_block(False)
 
+                elif key == config.jump_to_start:
+                    self.jumpToBegining()
+                
+                elif key == config.jump_to_end:
+                    self.jumpToEnd()
+
                 # deletes the current block
                 elif key == config.delete_block:
                     self.delete_block()
@@ -349,6 +348,12 @@ class MyApp(object):
         panel.update_panels()
         curses.doupdate()
         curses.endwin()
+
+    def jumpToBegining(self):
+        self.song.set_position(0)
+
+    def jumpToEnd(self):
+        self.song.set_position(1)
 
     def getBitRate(self,inputFile):
         cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
@@ -931,9 +936,9 @@ class MyApp(object):
             new_pos = 1
             if (self.song.get_state() == 6):
                 if cur_pos is not None:
-                    new_pos += pos_offset
-                else:
                     new_pos = cur_pos + pos_offset
+                else:
+                    new_pos += pos_offset
                 # get_state() 
                 # {0: 'NothingSpecial',
                 # 1: 'Opening',
@@ -988,6 +993,7 @@ class MyApp(object):
             self.song.play()
             self.song.set_position(new_pos)
         except Exception as ex:
+            self.log('changePositionBySecondOffset_new')
             self.log(ex)
 
     def changePositionBySecondOffset(self, sec_offset, cur_pos, message=True, forward=True):
