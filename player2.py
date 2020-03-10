@@ -324,10 +324,11 @@ class MyApp(object):
                     self.begining_ending_block(False)
 
                 elif key == config.jump_to_start:
-                    self.jumpToBegining()
+                    self.log('jump_to_start')
+                    self.song.set_position(0)
                 
                 elif key == config.jump_to_end:
-                    self.jumpToEnd()
+                    self.song.set_position(0.9999999999)
 
                 # deletes the current block
                 elif key == config.delete_block:
@@ -389,6 +390,8 @@ class MyApp(object):
         """
         try:
             state = open(self.state_file_name, 'wb')
+            for mark in self.state.marks:
+                self.log(mark.get_time(self.state.duration))
             pickle.dump(self.state, state)
         except Exception as e:
             self.log(e)
@@ -742,8 +745,11 @@ class MyApp(object):
         try:
             if self.is_editing:
                 self.state.marks[self.markItr].start = self.song.get_position()
-                self.print_to_screen('Block {} start edited'.format(len(self.state.marks)+1))
+                self.print_to_screen('Block {} start edited'.format((self.markItr+1)))
+                self.write_state_information()
             else:
+                if self.current_mark:
+                    self.current_mark = None
                 self.current_mark = Mark()
                 self.current_mark.start = self.song.get_position()
                 self.print_to_screen('Starting block {}'.format(len(self.state.marks)+1))
@@ -768,8 +774,14 @@ class MyApp(object):
         """
         try:
             if self.is_editing:
+                # self.log('is editing')
+                # self.log('self.markItr = {}'.format(self.markItr))
+                # self.log('Current end = {}'.format(self.state.marks[self.markItr].end))
+                # self.log('current position = {}'.format(self.song.get_position()))
                 self.state.marks[self.markItr].end = self.song.get_position()
-                self.print_to_screen('Block {} end edited'.format(len(self.state.marks)+1))
+                # self.log('Current end = {}'.format(self.state.marks[self.markItr].end))
+                self.print_to_screen('Block {} end edited'.format(self.markItr))
+                self.write_state_information()
             elif self.current_mark:
                 self.current_mark.end = self.song.get_position()
                 self.print_to_screen('Ending block {}'.format(len(self.state.marks)+1))
@@ -868,18 +880,23 @@ class MyApp(object):
                     self.state.marks[self.markItr].start
                 )
                 self.print_to_screen('Block {} start'.format(self.markItr + 1))
-                self.cycle_start = False
+                # self.cycle_start = False
+                # self.cycle_start = not self.cycle_start
             else:
                 self.changePositionBySecondOffset(
                     config.preview_time,
                     self.state.marks[self.markItr].end
                 )
-                self.log(self.poll_thread.last)
-                self.log(self.poll_thread.current)
+                # self.log(self.poll_thread.last)
+                # self.log(self.poll_thread.current)
 
                 self.print_to_screen('Block {} end'.format(self.markItr + 1))
-                self.cycle_start = True
+                # self.cycle_start = not self.cycle_start
+                # self.cycle_start = True
                 self.updateIters()
+
+            self.cycle_start = not self.cycle_start
+            
         else:
             self.changePositionBySecondOffset_new(
                 config.preview_time,
@@ -936,8 +953,10 @@ class MyApp(object):
             new_pos = 1
             if (self.song.get_state() == 6):
                 if cur_pos is not None:
+                    # self.log('stopped not None')
                     new_pos = cur_pos + pos_offset
                 else:
+                    # self.log('stopped none')
                     new_pos += pos_offset
                 # get_state() 
                 # {0: 'NothingSpecial',
@@ -957,8 +976,10 @@ class MyApp(object):
             else:
                 # Song is in a play position
                 if cur_pos is not None:
+                    # self.log('playing not none')
                     new_pos = cur_pos + pos_offset
                 else:
+                    # self.log('playing none')
                     new_pos = self.song.get_position() + pos_offset
 
             for itr,mark in enumerate(self.state.marks):
