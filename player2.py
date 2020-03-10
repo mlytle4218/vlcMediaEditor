@@ -774,12 +774,9 @@ class MyApp(object):
         """
         try:
             if self.is_editing:
-                # self.log('is editing')
-                # self.log('self.markItr = {}'.format(self.markItr))
-                # self.log('Current end = {}'.format(self.state.marks[self.markItr].end))
-                # self.log('current position = {}'.format(self.song.get_position()))
-                self.state.marks[self.markItr].end = self.song.get_position()
-                # self.log('Current end = {}'.format(self.state.marks[self.markItr].end))
+                # markItr - 1 from a problem with cycling function
+                # TODO fix this.
+                self.state.marks[self.markItr - 1].end = self.song.get_position()
                 self.print_to_screen('Block {} end edited'.format(self.markItr))
                 self.write_state_information()
             elif self.current_mark:
