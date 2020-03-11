@@ -659,6 +659,7 @@ class MyApp(object):
             self.advance_time = config.jump_time_short
         else:
             self.advance_time = config.jump_time_long
+        self.print_to_screen("{} second advance amount".format(self.advance_time))
         # if self.is_editing:
         #     self.current_mark.reset()
         #     self.current_mark = None
