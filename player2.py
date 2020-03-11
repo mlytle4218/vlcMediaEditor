@@ -40,6 +40,7 @@ class MyApp(object):
         self.volume = config.volume
         self.applyEditsBoolean = False
         self.cycle_start = True
+        self.advance_time = config.jump_time_long
 
         self.screen = stdscreen
 
@@ -180,46 +181,19 @@ class MyApp(object):
 
                 # Jumps back 5 seconds
                 elif key == config.jump_back:
-                    # check to see if the song has ended
                     self.changePositionBySecondOffset_new(
-                        -config.jump_time,
+                        -self.advance_time,
                         message=False,
                         forward=False
                     )
-                    # if (self.song.get_state() == 6):
-                    #     self.song = self.instance.media_player_new()
-                    #     self.media = self.instance.media_new(self.original_file)
-                    #     self.song.set_media(self.media)
-                    #     self.song.play()
-                    #     self.media.parse()
-                    #     self.changePositionBySecondOffset(
-                    #         -config.jump_time, 
-                    #         1,
-                    #         message=False,
-                    #         forward=False
-                    #     )
-                    # else:
-                    #     self.changePositionBySecondOffset(
-                    #         -config.jump_time,
-                    #         self.song.get_position(),
-                    #         message=False,
-                    #         forward=False
-                    #     )
-
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
                     self.changePositionBySecondOffset_new(
-                        config.jump_time,
+                        self.advance_time,
                         message=False,
                         forward=True
                     )
-                    # self.changePositionBySecondOffset(
-                    #     config.jump_time, 
-                    #     self.song.get_position(),
-                    #     message=False,
-                    #     forward=True
-                    #     )
 
                 # pauses and plays the media
                 elif key == config.play_pause:
@@ -234,9 +208,9 @@ class MyApp(object):
                     pass
 
                 # Saves a current mark
-                elif key == config.mark_save_current:
+                elif key == config.change_advance_speed:
                     try:
-                        self.saveCurrentMark()
+                        self.toggle_advance_speed()
                     except Exception as ex:
                         self.log(ex)
 
@@ -350,11 +324,17 @@ class MyApp(object):
         curses.doupdate()
         curses.endwin()
 
-    def jumpToBegining(self):
-        self.song.set_position(0)
 
-    def jumpToEnd(self):
-        self.song.set_position(1)
+    def nudge(self,forward=True):
+        if self.is_editing:
+            amount = 0
+            if forward:
+                amount = config.nudge_increment
+            else:
+                amount = -config.nudge_increment
+        else:
+            sounds.error_sound()
+            self.print_to_screen("Can not nudge unless in edit mode")
 
     def getBitRate(self,inputFile):
         cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
@@ -390,8 +370,8 @@ class MyApp(object):
         """
         try:
             state = open(self.state_file_name, 'wb')
-            for mark in self.state.marks:
-                self.log(mark.get_time(self.state.duration))
+            # for mark in self.state.marks:
+            #     self.log(mark.get_time(self.state.duration))
             pickle.dump(self.state, state)
         except Exception as e:
             self.log(e)
@@ -671,19 +651,23 @@ class MyApp(object):
         except Exception as ex:
             self.log(ex)
 
-    def saveCurrentMark(self):
+    def toggle_advance_speed(self):
         """
-        Method checks that block is finished and if it is, save it and remove it from the current block.
+        Method that changes the arrow forward/back advace mode.
         """
-        if self.is_editing:
-            self.current_mark.reset()
-            self.current_mark = None
-            self.print_to_screen('saved')
-            self.write_state_information()
-            self.is_editing = False
+        if self.advance_time == config.jump_time_long:
+            self.advance_time = config.jump_time_short
         else:
-            sounds.error_sound(self.volume)
-            self.print_to_screen('not in edit mode - saveCurrentMark()')
+            self.advance_time = config.jump_time_long
+        # if self.is_editing:
+        #     self.current_mark.reset()
+        #     self.current_mark = None
+        #     self.print_to_screen('saved')
+        #     self.write_state_information()
+        #     self.is_editing = False
+        # else:
+        #     sounds.error_sound(self.volume)
+        #     self.print_to_screen('not in edit mode f toggle_advance_speed()')
 
     def checkForOverlap(self, markToBeChecked):
         """
@@ -741,7 +725,6 @@ class MyApp(object):
         overlaps with any of the other blocks. If it does not, it creates a new
         block and sets the start position at the current position
         """
-        # self.log('startMakrPosition')
         try:
             if self.is_editing:
                 self.state.marks[self.markItr].start = self.song.get_position()
@@ -775,7 +758,7 @@ class MyApp(object):
         try:
             if self.is_editing:
                 # markItr - 1 from a problem with cycling function
-                # TODO fix this.
+                # TODO fix this living with it for now.
                 self.state.marks[self.markItr - 1].end = self.song.get_position()
                 self.print_to_screen('Block {} end edited'.format(self.markItr))
                 self.write_state_information()
@@ -877,19 +860,13 @@ class MyApp(object):
                     self.state.marks[self.markItr].start
                 )
                 self.print_to_screen('Block {} start'.format(self.markItr + 1))
-                # self.cycle_start = False
-                # self.cycle_start = not self.cycle_start
             else:
                 self.changePositionBySecondOffset(
                     config.preview_time,
                     self.state.marks[self.markItr].end
                 )
-                # self.log(self.poll_thread.last)
-                # self.log(self.poll_thread.current)
 
                 self.print_to_screen('Block {} end'.format(self.markItr + 1))
-                # self.cycle_start = not self.cycle_start
-                # self.cycle_start = True
                 self.updateIters()
 
             self.cycle_start = not self.cycle_start
@@ -928,10 +905,8 @@ class MyApp(object):
 
     def updateIters(self):
         if len(self.state.marks) > self.markItr+1:
-            self.blockItrPrev = self.markItr
             self.markItr += 1
         else:
-            self.blockItrPrev = self.markItr
             self.markItr = 0
 
     def changePositionBySecondOffset_new(self, sec_offset, cur_pos=None, message=True, forward=True):
@@ -1030,7 +1005,7 @@ class MyApp(object):
         try:
             pos_offset = (sec_offset * 1000) / self.state.duration
             new_pos = cur_pos + pos_offset
-            self.log(new_pos)
+            # self.log(new_pos)
 
             for itr,mark in enumerate(self.state.marks):
                 if not self.is_editing:

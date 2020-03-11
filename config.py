@@ -19,7 +19,7 @@ jump_to_end = curses.KEY_F5
 # Block creation and editing
 mark_create_new = ord('n')
 cycle_through_marks_editing = ord('C')
-mark_save_current = ord('s')
+change_advance_speed = ord('s')
 mark_record_start_position = ord('b')
 mark_record_end_position = ord('e')
 cycle_through_marks = ord('c')
@@ -53,7 +53,8 @@ volume_down = ord('d')
 
 
 
-jump_time = 5
+jump_time_long = 5
+jump_time_short = 1
 play_speed_rate = 0.5
 
 
