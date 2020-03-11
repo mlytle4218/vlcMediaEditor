@@ -40,7 +40,7 @@ class WT(threading.Thread):
                         if abs(self.current - self.last) < self.difference: 
                             if self.song.is_editing:
                                 # self.song.log("{}:{}".format(self.last <= each.end, each.end <= self.current))
-                                res = self.last - self.difference <= each.end <= self.current + self.difference
+                                # res = self.last - self.difference <= each.end <= self.current + self.difference
                                 # if res:
                                 #     self.song.log(res)
                                 try:
