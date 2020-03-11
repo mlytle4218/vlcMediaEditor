@@ -202,10 +202,10 @@ class MyApp(object):
                     else:
                         self.song.play()
 
-                # Create a new mark
-                elif key == config.mark_create_new:
-                    # self.createNewMark()
-                    pass
+                # # Create a new mark
+                # elif key == config.mark_create_new:
+                #     # self.createNewMark()
+                #     pass
 
                 # Saves a current mark
                 elif key == config.change_advance_speed:
@@ -307,14 +307,22 @@ class MyApp(object):
                 # deletes the current block
                 elif key == config.delete_block:
                     self.delete_block()
+                        
+                elif key == config.nudge_forward:
+                    self.log('nudge forward')
+                    self.nudge()
+                
+                elif key == config.nudge_back:
+                    self.log('nudge back')
+                    self.nudge(forward=False)
 
-                # elif key == config.nudge:
-                #     self.nudgeBeginningOrEnding()
-
-                elif key == config.list_marks:
+                elif key == 60:
                     self.log('current blocks')
                     for mark in self.state.marks:
                         self.log(mark.get_time(self.state.duration))
+                # else:
+                #     self.log('key')
+
         except KeyboardInterrupt:
             pass
 
@@ -329,9 +337,19 @@ class MyApp(object):
         if self.is_editing:
             amount = 0
             if forward:
-                amount = config.nudge_increment
+                amount = ((config.nudge_increment * 1000)/self.state.duration)
             else:
-                amount = -config.nudge_increment
+                amount = -((config.nudge_increment * 1000)/self.state.duration)
+            # this is backwards becuase the updateIters has set it to be the end
+            # for the next update - this is not good
+            # TODO fix this
+            if not self.cycle_start:
+                self.state.marks[self.markItr].start += amount
+            else:
+                # this is minus 1 because the updateItrs has already advanced
+                # TODO fix this
+                self.state.marks[self.markItr-1].end += amount
+            self.write_state_information()
         else:
             sounds.error_sound()
             self.print_to_screen("Can not nudge unless in edit mode")

@@ -17,7 +17,7 @@ jump_to_start = curses.KEY_F4
 jump_to_end = curses.KEY_F5
 
 # Block creation and editing
-mark_create_new = ord('n')
+# mark_create_new = ord('n')
 cycle_through_marks_editing = ord('C')
 change_advance_speed = ord('s')
 mark_record_start_position = ord('b')
@@ -27,15 +27,18 @@ cycle_through_marks_stop = ord('v')
 block_from_begining = ord('B')
 block_till_end = ord('E')
 delete_block = ord('d')
-nudge = ord('l')
-nudge_beginning_left = curses.KEY_F0
-nudge_beginning_left_desc = 'Function 1'
-nudge_beginning_right =  curses.KEY_F1
-nudge_beginning_right = 'Function 2'
-nudge_ending_left = curses.KEY_F2
-nudge_ending_left = 'Function 3'
-nudge_ending_right = curses.KEY_F3
-nudge_ending_right = 'Function 4'
+nudge_back = ord('n')
+nudge_forward = ord('m')
+
+# nudge = ord('l')
+# nudge_beginning_left = curses.KEY_F0
+# nudge_beginning_left_desc = 'Function 1'
+# nudge_beginning_right =  curses.KEY_F1
+# nudge_beginning_right = 'Function 2'
+# nudge_ending_left = curses.KEY_F2
+# nudge_ending_left = 'Function 3'
+# nudge_ending_right = curses.KEY_F3
+# nudge_ending_right = 'Function 4'
 
 
 # Quitting and applying edits
@@ -63,4 +66,3 @@ volume_increments = 0.5
 nudge_increment = 0.25
 preview_time = -2
 
-list_marks= ord("m")
