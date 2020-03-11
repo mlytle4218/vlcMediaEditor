@@ -655,20 +655,14 @@ class MyApp(object):
         """
         Method that changes the arrow forward/back advace mode.
         """
+        plural = ""
         if self.advance_time == config.jump_time_long:
             self.advance_time = config.jump_time_short
         else:
             self.advance_time = config.jump_time_long
-        self.print_to_screen("{} second advance amount".format(self.advance_time))
-        # if self.is_editing:
-        #     self.current_mark.reset()
-        #     self.current_mark = None
-        #     self.print_to_screen('saved')
-        #     self.write_state_information()
-        #     self.is_editing = False
-        # else:
-        #     sounds.error_sound(self.volume)
-        #     self.print_to_screen('not in edit mode f toggle_advance_speed()')
+            plural = "s"
+        
+        self.print_to_screen("{} second".format(self.advance_time) + plural)
 
     def checkForOverlap(self, markToBeChecked):
         """
