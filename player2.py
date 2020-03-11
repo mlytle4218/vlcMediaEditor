@@ -345,10 +345,18 @@ class MyApp(object):
             # TODO fix this
             if not self.cycle_start:
                 self.state.marks[self.markItr].start += amount
+                self.changePositionBySecondOffset(
+                    config.preview_time,
+                    self.state.marks[self.markItr].start
+                )
             else:
                 # this is minus 1 because the updateItrs has already advanced
                 # TODO fix this
                 self.state.marks[self.markItr-1].end += amount
+                self.changePositionBySecondOffset(
+                    config.preview_time,
+                    self.state.marks[self.markItr-1].end
+                )
             self.write_state_information()
         else:
             sounds.error_sound()
