@@ -12,6 +12,8 @@ class Mark():
     def timeStamp(self,duration,current):
         out = duration * current
         millis = int(out)
+        if millis == 0:
+            return '0'
         seconds = round((millis/1000) % 60, 3)
         minutes = (millis/(1000*60)) % 60
         minutes = int(minutes)

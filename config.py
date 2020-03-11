@@ -30,6 +30,8 @@ delete_block = ord('d')
 nudge_back = ord('n')
 nudge_forward = ord('m')
 
+export_block_as_new_file = ord('e')
+
 # nudge = ord('l')
 # nudge_beginning_left = curses.KEY_F0
 # nudge_beginning_left_desc = 'Function 1'

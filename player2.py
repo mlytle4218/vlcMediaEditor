@@ -316,6 +316,9 @@ class MyApp(object):
                     self.log('nudge back')
                     self.nudge(forward=False)
 
+                elif key == config.export_block_as_new_file:
+                    pass
+
                 elif key == 60:
                     self.log('current blocks')
                     for mark in self.state.marks:
@@ -332,6 +335,9 @@ class MyApp(object):
         curses.doupdate()
         curses.endwin()
 
+    
+    def exportCurrentBlock(self):
+        pass
 
     def nudge(self,forward=True):
         if self.is_editing:
@@ -824,16 +830,25 @@ class MyApp(object):
         command = ['ffmpeg', '-i', self.original_file]
         select = "select='"
         aselect = "aselect='"
+
+        # this reorganizes the marks to represent the blocks between the 'removed'
+        # blocks
         last = 0
         for each in self.state.marks:
             temp = each.end
             each.end = each.start
             each.start = last
             last = temp
-        n = Mark(position=self.song.get_position())
+
+        n = Mark()
         n.start = last
         n.end = 1
         self.state.marks.append(n)
+
+        # filter all the ones where start and end are equal
+        self.state.marks = list(filter(lambda item: item.start != item.end , self.state.marks))
+
+
         for i, each in enumerate(self.state.marks):
             if i == 0:
                 select += """between(t,{},{})""".format(
@@ -1155,13 +1170,14 @@ if __name__ == '__main__':
             curses.wrapper(MyApp)
             curses.endwin()
             if final_command:
-                process = subprocess.Popen(
-                    final_command, stdout=subprocess.PIPE, universal_newlines=True)
-                while True:
-                    output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
-                        break
-                    if output:
-                        print(output.strip())
+                print(final_command)
+                # process = subprocess.Popen(
+                #     final_command, stdout=subprocess.PIPE, universal_newlines=True)
+                # while True:
+                #     output = process.stdout.readline()
+                #     if output == '' and process.poll() is not None:
+                #         break
+                #     if output:
+                #         print(output.strip())
     else:
         print("requires a file to edit")
