@@ -67,15 +67,10 @@ class MyApp(object):
 
         # if opening a backup, look for a state file with the original name
         self.state_file_name = ""
-        self.old_file_name = ""
         if self.file_name.endswith('-original'):
             self.state_file_name = os.path.join(
                 self.file_path,
                 self.file_name.replace('-original', '') + ".state"
-            )
-            self.old_file_name = os.path.join(
-                self.file_path,
-                self.file_name.replace('-original','') + self.file_ext
             )
         else:
             # check to see if its our data input
@@ -117,7 +112,7 @@ class MyApp(object):
 
 
             # self.file_path = self.file_name_new
-            self.old_file_name = self.original_file
+            # self.old_file_name = self.original_file
             self.original_file = self.file_name + "-original" + self.file_ext
 
             self.state_file_name = os.path.join(
@@ -132,19 +127,6 @@ class MyApp(object):
             self.state.marks = []
             self.state.duration = self.get_file_length(self.original_file)
             self.write_state_information()
-
-        # print('loading file')
-        # try:
-        #     if not self.state.duration:
-        #         self.state.duration = self.get_file_length(self.original_file)
-        #         self.write_state_information()
-        #     self.log("file duration: {}".format(self.state.duration))
-        # except Exception:
-        #     quick_state = State()
-        #     quick_state.marks = []
-        #     quick_state.duration = self.get_file_length(self.original_file)
-        #     self.state = quick_state
-
         
         # this extra step is to set the verbosity of the log errors so they
         # don't print to the screen
@@ -245,6 +227,10 @@ class MyApp(object):
                 elif key == config.cycle_through_marks_editing:
                     try:
                         self.is_editing = not self.is_editing
+                        if self.is_editing:
+                            self.print_to_screen('Now editing')
+                        else:
+                            self.print_to_screen('No longer editing')
                     except Exception as ex:
                         self.log(ex)
 
@@ -260,16 +246,11 @@ class MyApp(object):
                     self.poll_thread.join()
                     break
 
-                # elif key == ord('x'):
-                #     self.log(self.position)
-                #     self.log(self.song.get_position())
-
                 # Do the actual edits taking the marks and applying them to
                 # to the original file
                 elif key == config.begin_edits:
                     global final_command
-                    # global edited_file
-                    final_command = self.createFfmpegCommand(self.state.marks)
+                    final_command = self.applyEdits(self.state.marks)
                     self.poll_thread.join()
                     break
 
@@ -329,8 +310,6 @@ class MyApp(object):
                     self.log('current blocks')
                     for mark in self.state.marks:
                         self.log(mark.get_time(self.state.duration))
-                # else:
-                #     self.log('key')
         except KeyboardInterrupt:
             pass
 
@@ -343,14 +322,16 @@ class MyApp(object):
     
     def exportCurrentBlock(self):
         if self.is_editing:
-            self.log(self.cycle_start)
-            self.log(self.markItr)
+            self.song.pause()
             if self.cycle_start:
-                command = self.createFfmpegCommand(self.state.marks[self.markItr-1])
-                self.log(self.state.marks[self.markItr-1])
+                mark = self.state.marks[self.markItr-1]
+                command = self.createFfmpegCommand(mark)
+                self.log(command)
             else:
-                command = self.createFfmpegCommand(self.state.marks[self.markItr])
-                self.log(self.state.marks[self.markItr])
+                mark = self.state.marks[self.markItr]
+                command = self.createFfmpegCommand(mark)
+                self.log(command)
+            self.song.play()
 
     def nudge(self,forward=True):
         if self.is_editing:
@@ -832,7 +813,7 @@ class MyApp(object):
             filter(lambda x: x.is_null() != True, self.state.marks))
         self.log('check_for_null_blocks')
 
-    def createFfmpegCommand(self, local_marks):
+    def applyEdits(self, local_marks):
         """
         Method to create the final command for editing the original file.
         """
@@ -850,6 +831,7 @@ class MyApp(object):
         # blocks
         last = 0
         for each in local_marks:
+            self.log(each)
             temp = each.end
             each.end = each.start
             each.start = last
@@ -893,6 +875,33 @@ class MyApp(object):
         command.append(self.original_file)
         self.log(command)
         return command #, edited_file
+
+    def createFfmpegCommand(self, local_mark):
+        """
+        Method to create the final command for editing the original file.
+        """
+        
+        command = ['ffmpeg', '-i', self.original_file]
+        select = "select='"
+        aselect = "aselect='"
+        select += """between(t,{},{})""".format(
+            (self.mark_to_milliseconds(local_mark.start) / 1000),
+            (self.mark_to_milliseconds(local_mark.end) / 1000),
+        )
+        aselect += """between(t,{},{})""".format(
+            (self.mark_to_milliseconds(local_mark.start) / 1000),
+            (self.mark_to_milliseconds(local_mark.end) / 1000),
+        )
+
+        select += """',setpts=N/FRAME_RATE/TB """
+        aselect += """',asetpts=N/SR/TB"""
+        command.append('-vf')
+        command.append(select)
+        command.append('-af')
+        command.append(aselect)
+        output_file = self.getInput('new file path and name', 200)
+        command.append(output_file)
+        return command
 
     def cycleThroughMarks(self, edit=False):
         """
