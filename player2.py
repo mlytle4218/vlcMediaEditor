@@ -425,7 +425,7 @@ class MyApp(object):
             state = open(self.state_file_name, 'rb')
             self.state = pickle.load(state)
         except IOError:
-            self.log("No file found")
+            self.log("No state file found")
 
     def delete_block(self):
         """
