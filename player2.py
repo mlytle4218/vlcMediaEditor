@@ -125,19 +125,24 @@ class MyApp(object):
                 self.file_name + ".state"
             )
 
-        self.read_state_information()
+        if not self.read_state_information():
+            print('loading file')
+            self.state = State()
+            self.state.marks = []
+            self.state.duration = self.get_file_length(self.original_file)
+            self.write_state_information()
 
-        print('loading file')
-        try:
-            if not self.state.duration:
-                self.state.duration = self.get_file_length(self.original_file)
-                self.write_state_information()
-            self.log("file duration: {}".format(self.state.duration))
-        except Exception:
-            quick_state = State()
-            quick_state.marks = []
-            quick_state.duration = self.get_file_length(self.original_file)
-            self.state = quick_state
+        # print('loading file')
+        # try:
+        #     if not self.state.duration:
+        #         self.state.duration = self.get_file_length(self.original_file)
+        #         self.write_state_information()
+        #     self.log("file duration: {}".format(self.state.duration))
+        # except Exception:
+        #     quick_state = State()
+        #     quick_state.marks = []
+        #     quick_state.duration = self.get_file_length(self.original_file)
+        #     self.state = quick_state
 
         
         # this extra step is to set the verbosity of the log errors so they
@@ -413,8 +418,8 @@ class MyApp(object):
             # for mark in self.state.marks:
             #     self.log(mark.get_time(self.state.duration))
             pickle.dump(self.state, state)
-        except Exception as e:
-            self.log(e)
+        except Exception as ex:
+            self.log(ex)
 
     def read_state_information(self):
         """
@@ -424,8 +429,10 @@ class MyApp(object):
         try:
             state = open(self.state_file_name, 'rb')
             self.state = pickle.load(state)
+            return True
         except IOError:
             self.log("No state file found")
+            return False
 
     def delete_block(self):
         """
