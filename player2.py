@@ -125,6 +125,7 @@ class MyApp(object):
                 self.file_name + ".state"
             )
 
+        # if no state file is found or read, create the information
         if not self.read_state_information():
             print('loading file')
             self.state = State()
@@ -330,7 +331,6 @@ class MyApp(object):
                         self.log(mark.get_time(self.state.duration))
                 # else:
                 #     self.log('key')
-
         except KeyboardInterrupt:
             pass
 
