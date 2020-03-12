@@ -915,7 +915,7 @@ class MyApp(object):
         # self.is_editing = edit
         
         if self.is_editing:
-            self.print_to_screen('bob')
+            # self.print_to_screen('bob')
             if self.cycle_start:
                 self.changePositionBySecondOffset(
                     config.preview_time,
