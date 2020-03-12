@@ -423,6 +423,7 @@ class MyApp(object):
             if self.is_editing:
                 self.state.marks.pop(self.markItr)
                 self.print_to_screen('Block deleted')
+                self.write_state_information()
             else:
                 self.print_to_screen('Not in edit mode')
             # if self.current_mark.is_editing:
@@ -914,6 +915,7 @@ class MyApp(object):
         # self.is_editing = edit
         
         if self.is_editing:
+            self.print_to_screen('bob')
             if self.cycle_start:
                 self.changePositionBySecondOffset(
                     config.preview_time,
