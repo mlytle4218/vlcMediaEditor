@@ -210,7 +210,7 @@ class MyApp(object):
                 # Saves a current mark
                 elif key == config.change_advance_speed:
                     try:
-                        self.toggle_advance_speed()
+                        self.toggleAdvanceSpeed()
                     except Exception as ex:
                         self.log(ex)
 
@@ -254,16 +254,16 @@ class MyApp(object):
                     self.poll_thread.join()
                     break
 
-                elif key == ord('x'):
-                    self.log(self.position)
-                    self.log(self.song.get_position())
+                # elif key == ord('x'):
+                #     self.log(self.position)
+                #     self.log(self.song.get_position())
 
                 # Do the actual edits taking the marks and applying them to
                 # to the original file
                 elif key == config.begin_edits:
                     global final_command
-                    global edited_file
-                    final_command, edited_file = self.applyEdits()
+                    # global edited_file
+                    final_command = self.createFfmpegCommand(self.state.marks)
                     self.poll_thread.join()
                     break
 
@@ -317,7 +317,7 @@ class MyApp(object):
                     self.nudge(forward=False)
 
                 elif key == config.export_block_as_new_file:
-                    pass
+                    self.exportCurrentBlock()
 
                 elif key == 60:
                     self.log('current blocks')
@@ -337,7 +337,15 @@ class MyApp(object):
 
     
     def exportCurrentBlock(self):
-        pass
+        if self.is_editing:
+            self.log(self.cycle_start)
+            self.log(self.markItr)
+            if self.cycle_start:
+                command = self.createFfmpegCommand(self.state.marks[self.markItr-1])
+                self.log(self.state.marks[self.markItr-1])
+            else:
+                command = self.createFfmpegCommand(self.state.marks[self.markItr])
+                self.log(self.state.marks[self.markItr])
 
     def nudge(self,forward=True):
         if self.is_editing:
@@ -387,7 +395,7 @@ class MyApp(object):
         # return int(result['streams'][0]['sample_rate'])
 
     def checkRates(self,inputFile):
-        return self.getBitRate(inputFile) == 128000 and self.getSampleRate ==  44100
+        return self.getBitRate(inputFile) == 128000 and self.getSampleRate(inputFile) ==  44100
 
     def startSound(self):
         sounds.mark_start_sound()
@@ -683,7 +691,7 @@ class MyApp(object):
         except Exception as ex:
             self.log(ex)
 
-    def toggle_advance_speed(self):
+    def toggleAdvanceSpeed(self):
         """
         Method that changes the arrow forward/back advace mode.
         """
@@ -817,7 +825,7 @@ class MyApp(object):
             filter(lambda x: x.is_null() != True, self.state.marks))
         self.log('check_for_null_blocks')
 
-    def applyEdits(self):
+    def createFfmpegCommand(self, local_marks):
         """
         Method to create the final command for editing the original file.
         """
@@ -826,7 +834,7 @@ class MyApp(object):
 
         # filename, file_extension = os.path.splitext(self.original_file)
         # edited_file = filename + "-edited" + file_extension
-        edited_file = self.old_file_name
+        # edited_file = self.old_file_name
         command = ['ffmpeg', '-i', self.original_file]
         select = "select='"
         aselect = "aselect='"
@@ -834,7 +842,7 @@ class MyApp(object):
         # this reorganizes the marks to represent the blocks between the 'removed'
         # blocks
         last = 0
-        for each in self.state.marks:
+        for each in local_marks:
             temp = each.end
             each.end = each.start
             each.start = last
@@ -843,13 +851,13 @@ class MyApp(object):
         n = Mark()
         n.start = last
         n.end = 1
-        self.state.marks.append(n)
+        local_marks.append(n)
 
         # filter all the ones where start and end are equal
-        self.state.marks = list(filter(lambda item: item.start != item.end , self.state.marks))
+        local_marks = list(filter(lambda item: item.start != item.end , local_marks))
 
 
-        for i, each in enumerate(self.state.marks):
+        for i, each in enumerate(local_marks):
             if i == 0:
                 select += """between(t,{},{})""".format(
                     (self.mark_to_milliseconds(each.start) / 1000),
@@ -875,9 +883,9 @@ class MyApp(object):
         command.append(select)
         command.append('-af')
         command.append(aselect)
-        command.append(edited_file)
+        command.append(self.original_file)
         self.log(command)
-        return command, edited_file
+        return command #, edited_file
 
     def cycleThroughMarks(self, edit=False):
         """
@@ -1166,7 +1174,7 @@ if __name__ == '__main__':
             printHelp()
         else:
             final_command = None
-            edited_file = None
+            # edited_file = None
             curses.wrapper(MyApp)
             curses.endwin()
             if final_command:
