@@ -16,7 +16,7 @@ class WT(threading.Thread):
         self.stoprequest = threading.Event()
         self.last = 0
 
-        self.current_position = 0
+        self.song.current_position = 0
         self.difference = 0.0025
         # self.difference = 0.005
 
@@ -33,28 +33,28 @@ class WT(threading.Thread):
         # relative to the length of the file.
 
         while not self.stoprequest.isSet():
-            self.current_position = self.song.song.get_position()
-            if abs(self.current_position - self.last) > 0:
+            self.song.current_position = self.song.song.get_position()
+            if abs(self.song.current_position - self.last) > 0:
                 try:
                     for itr,each in enumerate(self.song.state.marks):
                         if abs(self.song.current_position - self.last) < self.difference: 
                             if self.song.is_editing:
-                                # self.song.log("{}:{}".format(self.last <= each.end, each.end <= self.current_position))
-                                # res = self.last - self.difference <= each.end <= self.current_position + self.difference
+                                # self.song.log("{}:{}".format(self.last <= each.end, each.end <= self.song.current_position))
+                                # res = self.last - self.difference <= each.end <= self.song.current_position + self.difference
                                 # if res:
                                 #     self.song.log(res)
                                 try:
-                                    if self.last <= each.start <= self.current_position:
+                                    if self.last <= each.start <= self.song.current_position:
                                         self.song.print_to_screen('Block {} start'.format(itr + 1))
                                         if each.start != 0:
                                             self.song.startSound()
-                                    if self.last <= each.end <= self.current_position:
+                                    if self.last <= each.end <= self.song.current_position:
                                         self.song.print_to_screen('Block {} end'.format(itr + 1))
                                         self.song.endSound()
                                 except Exception as ex:
                                     self.song.log(ex)
                             else:
-                                if self.last <= each.start <= self.current_position:
+                                if self.last <= each.start <= self.song.current_position:
                                     # keep the marks iterator up to date on the location in the file
                                     self.song.markItr = itr
                                     self.song.updateIters()
@@ -68,7 +68,7 @@ class WT(threading.Thread):
                     
                 except Exception as ex:
                     self.song.log(ex)
-                self.last = self.current_position
+                self.last = self.song.current_position
 
     # used to shut down the worker thread
     def join(self, timeout=None):
