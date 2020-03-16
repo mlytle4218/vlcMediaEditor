@@ -1200,7 +1200,7 @@ if __name__ == '__main__':
             curses.wrapper(MyApp)
             curses.endwin()
             if final_command:
-                print(final_command)
+                # print(final_command)
                 process = subprocess.Popen(
                     final_command, stdout=subprocess.PIPE, universal_newlines=True)
                 while True:
