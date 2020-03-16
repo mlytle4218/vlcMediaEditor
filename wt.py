@@ -34,7 +34,7 @@ class WT(threading.Thread):
 
         while not self.stoprequest.isSet():
             self.current_position = self.song.song.get_position()
-            if abs(self.song.current_position - self.last) > 0:
+            if abs(self.current_position - self.last) > 0:
                 try:
                     for itr,each in enumerate(self.song.state.marks):
                         if abs(self.song.current_position - self.last) < self.difference: 
