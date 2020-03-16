@@ -886,7 +886,7 @@ class MyApp(object):
         command.append(aselect)
         command.append(self.output_file_name)
         self.log(command)
-        return command #, edited_file
+        return command
 
     def createFfmpegCommand(self, local_mark):
         """
