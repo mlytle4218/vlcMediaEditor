@@ -59,6 +59,7 @@ class MyApp(object):
         self.window.clear()
 
         self.original_file = sys.argv[1]
+        self.output_file_name = None
 
         self.file_path = os.path.dirname(os.path.realpath(sys.argv[1]))
         self.file_basename = os.path.basename(sys.argv[1])
@@ -72,6 +73,10 @@ class MyApp(object):
                 self.file_path,
                 self.file_name.replace('-original', '') + ".state"
             )
+            self.output_file_name = os.path.join(
+                self.file_path,
+                self.file_name.replace('-original', '') + self.file_ext
+            )
         else:
             # check to see if its our data input
             if self.file_ext == '.data':
@@ -80,6 +85,7 @@ class MyApp(object):
                 self.file_path,
                 self.file_name + "-original" + self.file_ext
             )
+            self.output_file_name = self.original_file
             if self.checkRates(os.path.realpath(sys.argv[1])):
                 shutil.move(
                     os.path.realpath(sys.argv[1]),
@@ -878,7 +884,7 @@ class MyApp(object):
         command.append(select)
         command.append('-af')
         command.append(aselect)
-        command.append(self.original_file)
+        command.append(self.output_file_name)
         self.log(command)
         return command #, edited_file
 
@@ -1196,11 +1202,9 @@ if __name__ == '__main__':
             printHelp()
         else:
             final_command = None
-            # edited_file = None
             curses.wrapper(MyApp)
             curses.endwin()
             if final_command:
-                # print(final_command)
                 process = subprocess.Popen(
                     final_command, stdout=subprocess.PIPE, universal_newlines=True)
                 while True:
