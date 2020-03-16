@@ -260,9 +260,7 @@ class MyApp(object):
 
                 # print the current time formatted to the screen
                 elif key == config.current_time:
-                    c_time = self.timeStamp(
-                        self.state.duration, self.song.get_position())
-                    self.print_to_screen(c_time)
+                    self.getCurrentTime()
 
                 # print the lenght of the file to the screen
                 elif key == config.file_length:
@@ -319,7 +317,14 @@ class MyApp(object):
         curses.doupdate()
         curses.endwin()
 
-    
+    def getCurrentTime(self):
+        cur_time = ""
+        if (self.song.get_state() == 6):
+            cur_time =  self.timeStamp(self.state.duration, 1) + " End of File"
+        else:
+            cur_time = self.timeStamp(self.state.duration, self.song.get_position())
+        self.print_to_screen(cur_time)
+
     def exportCurrentBlock(self):
         if self.is_editing:
             self.song.pause()
@@ -915,7 +920,6 @@ class MyApp(object):
         # self.is_editing = edit
         
         if self.is_editing:
-            # self.print_to_screen('bob')
             if self.cycle_start:
                 self.changePositionBySecondOffset(
                     config.preview_time,
@@ -985,26 +989,26 @@ class MyApp(object):
         try:
             pos_offset = (sec_offset * 1000) / self.state.duration
             new_pos = 1
+            # get_state() 
+            # {0: 'NothingSpecial',
+            # 1: 'Opening',
+            # 2: 'Buffering',
+            # 3: 'Playing',
+            # 4: 'Paused',
+            # 5: 'Stopped',
+            # 6: 'Ended',
+            # 7: 'Error'}
             if (self.song.get_state() == 6):
+                # Song has reached the end
                 if cur_pos is not None:
-                    # self.log('stopped not None')
                     new_pos = cur_pos + pos_offset
                 else:
-                    # self.log('stopped none')
-                    new_pos += pos_offset
-                # get_state() 
-                # {0: 'NothingSpecial',
-                # 1: 'Opening',
-                # 2: 'Buffering',
-                # 3: 'Playing',
-                # 4: 'Paused',
-                # 5: 'Stopped',
-                # 6: 'Ended',
-                # 7: 'Error'}
-                # Song is in a stopped position
+                    # have to add this as the pos_offset is being send back as a postive and a negative
+                    new_pos =  1 + pos_offset
                 self.song = self.instance.media_player_new()
                 self.media = self.instance.media_new(self.original_file)
                 self.song.set_media(self.media)
+                self.log(new_pos)
                 self.song.set_position(new_pos)
                 self.song.play()
             else:
