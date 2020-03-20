@@ -96,7 +96,8 @@ class MyApp(object):
                 )
             else:
                 self.print_to_screen('converting file')
-                cmd = ['ffmpeg','-y','-i',os.path.realpath(sys.argv[1]),'-ar','44100',os.path.join(self.file_path, self.file_name_new)]
+                cmd = ['ffmpeg', '-y', '-i', os.path.realpath(
+                    sys.argv[1]), '-ar', '44100', os.path.join(self.file_path, self.file_name_new)]
                 result = subprocess.run(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 lines = result.stdout.decode('utf-8').splitlines()
@@ -105,24 +106,20 @@ class MyApp(object):
                         if word.startswith('time='):
                             time_temp = word.split("=")[1].split(":")
                             time = int(time_temp[0]) * 3600 + int(time_temp[1]
-                                                                )*60 + round(float(time_temp[2]))
-                
+                                                                  )*60 + round(float(time_temp[2]))
+
                 quick_state = State()
                 quick_state.marks = []
                 quick_state.duration = time * 1000
                 self.write_state_information()
                 os.remove(os.path.realpath(sys.argv[1]))
 
-
-
-
-
             # self.file_path = self.file_name_new
             # self.old_file_name = self.original_file
             self.original_file = self.file_name + "-original" + self.file_ext
 
             self.state_file_name = os.path.join(
-                self.file_path, 
+                self.file_path,
                 self.file_name + ".state"
             )
 
@@ -133,7 +130,7 @@ class MyApp(object):
             self.state.marks = []
             self.state.duration = self.get_file_length(self.original_file)
             self.write_state_information()
-        
+
         # this extra step is to set the verbosity of the log errors so they
         # don't print to the screen
         # libvlc_set_log_verbosity tooltip says its defunct
@@ -280,7 +277,7 @@ class MyApp(object):
 
                 # creates a mark that starts at the beginning of the file to the
                 # current position
-                elif key == config.block_from_begining:
+                elif key == config.block_till_begining:
                     self.begining_ending_block(True)
 
                 # creates a mark that starts from the current position to the end
@@ -291,18 +288,18 @@ class MyApp(object):
                 elif key == config.jump_to_start:
                     self.log('jump_to_start')
                     self.song.set_position(0)
-                
+
                 elif key == config.jump_to_end:
                     self.song.set_position(0.9999999999)
 
                 # deletes the current block
                 elif key == config.delete_block:
                     self.delete_block()
-                        
+
                 elif key == config.nudge_forward:
                     self.log('nudge forward')
                     self.nudge()
-                
+
                 elif key == config.nudge_back:
                     self.log('nudge back')
                     self.nudge(forward=False)
@@ -326,9 +323,10 @@ class MyApp(object):
     def getCurrentTime(self):
         cur_time = ""
         if (self.song.get_state() == 6):
-            cur_time =  self.timeStamp(self.state.duration, 1) + " End of File"
+            cur_time = self.timeStamp(self.state.duration, 1) + " End of File"
         else:
-            cur_time = self.timeStamp(self.state.duration, self.song.get_position())
+            cur_time = self.timeStamp(
+                self.state.duration, self.song.get_position())
         self.print_to_screen(cur_time)
 
     def exportCurrentBlock(self):
@@ -344,7 +342,7 @@ class MyApp(object):
                 self.log(command)
             self.song.play()
 
-    def nudge(self,forward=True):
+    def nudge(self, forward=True):
         if self.is_editing:
             amount = 0
             if forward:
@@ -373,26 +371,28 @@ class MyApp(object):
             sounds.error_sound()
             self.print_to_screen("Can not nudge unless in edit mode")
 
-    def getBitRate(self,inputFile):
-        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+    def getBitRate(self, inputFile):
+        cmd = ['ffprobe', '-v', 'quiet', '-print_format',
+               'json', '-show_streams', inputFile]
         result = subprocess.check_output(cmd).decode('utf-8')
         result = json.loads(result)
         for stream in result['streams']:
-            if stream['codec_type'] =="audio":
+            if stream['codec_type'] == "audio":
                 return int(stream['bit_rate'])
         # return int(result['streams'][0]['bit_rate'])
 
-    def getSampleRate(self,inputFile):
-        cmd = ['ffprobe','-v','quiet','-print_format','json','-show_streams',inputFile]
+    def getSampleRate(self, inputFile):
+        cmd = ['ffprobe', '-v', 'quiet', '-print_format',
+               'json', '-show_streams', inputFile]
         result = subprocess.check_output(cmd).decode('utf-8')
         result = json.loads(result)
         for stream in result['streams']:
-            if stream['codec_type'] =="audio":
+            if stream['codec_type'] == "audio":
                 return int(stream['sample_rate'])
         # return int(result['streams'][0]['sample_rate'])
 
-    def checkRates(self,inputFile):
-        return self.getBitRate(inputFile) == 128000 and self.getSampleRate(inputFile) ==  44100
+    def checkRates(self, inputFile):
+        return self.getBitRate(inputFile) == 128000 and self.getSampleRate(inputFile) == 44100
 
     def startSound(self):
         sounds.mark_start_sound()
@@ -701,7 +701,7 @@ class MyApp(object):
         else:
             self.advance_time = config.jump_time_long
             plural = "s"
-        
+
         self.print_to_screen("{} second".format(self.advance_time) + plural)
 
     def checkForOverlap(self, markToBeChecked):
@@ -711,10 +711,10 @@ class MyApp(object):
         Arguments:
         markToBeChecked - mark - the new mark that may overlap another.
 
-        Returns an array of iterators of the marks that it overlaps 
+        Returns an array of iterators of the marks that it overlaps
         """
         results = []
-        for itr,mark in enumerate(self.state.marks):
+        for itr, mark in enumerate(self.state.marks):
             if mark.over(markToBeChecked):
                 results.append(itr)
 
@@ -763,14 +763,16 @@ class MyApp(object):
         try:
             if self.is_editing:
                 self.state.marks[self.markItr].start = self.song.get_position()
-                self.print_to_screen('Block {} start edited'.format((self.markItr+1)))
+                self.print_to_screen(
+                    'Block {} start edited'.format((self.markItr+1)))
                 self.write_state_information()
             else:
                 if self.current_mark:
                     self.current_mark = None
                 self.current_mark = Mark()
                 self.current_mark.start = self.song.get_position()
-                self.print_to_screen('Starting block {}'.format(len(self.state.marks)+1))
+                self.print_to_screen(
+                    'Starting block {}'.format(len(self.state.marks)+1))
 
         except Exception as ex:
             sounds.error_sound(self.volume)
@@ -794,17 +796,21 @@ class MyApp(object):
             if self.is_editing:
                 # markItr - 1 from a problem with cycling function
                 # TODO fix this living with it for now.
-                self.state.marks[self.markItr - 1].end = self.song.get_position()
-                self.print_to_screen('Block {} end edited'.format(self.markItr))
+                self.state.marks[self.markItr -
+                                 1].end = self.song.get_position()
+                self.print_to_screen(
+                    'Block {} end edited'.format(self.markItr))
                 self.write_state_information()
             elif self.current_mark:
                 self.current_mark.end = self.song.get_position()
-                self.print_to_screen('Ending block {}'.format(len(self.state.marks)+1))
+                self.print_to_screen(
+                    'Ending block {}'.format(len(self.state.marks)+1))
                 self.overwriteOverlaps(self.current_mark)
                 self.current_mark = None
                 self.write_state_information()
             else:
-                self.print_to_screen("Can't end block that hasn't been started")
+                self.print_to_screen(
+                    "Can't end block that hasn't been started")
 
         except Exception as ex:
             self.log(ex)
@@ -855,8 +861,8 @@ class MyApp(object):
         local_marks.append(n)
 
         # filter all the ones where start and end are equal
-        local_marks = list(filter(lambda item: item.start != item.end , local_marks))
-
+        local_marks = list(
+            filter(lambda item: item.start != item.end, local_marks))
 
         for i, each in enumerate(local_marks):
             if i == 0:
@@ -892,7 +898,7 @@ class MyApp(object):
         """
         Method to create the final command for editing the original file.
         """
-        
+
         command = ['ffmpeg', '-i', self.original_file]
         select = "select='"
         aselect = "aselect='"
@@ -924,7 +930,7 @@ class MyApp(object):
         not. Default is False.
         """
         # self.is_editing = edit
-        
+
         if self.is_editing:
             if self.cycle_start:
                 self.changePositionBySecondOffset(
@@ -942,7 +948,7 @@ class MyApp(object):
                 self.updateIters()
 
             self.cycle_start = not self.cycle_start
-            
+
         else:
             self.changePositionBySecondOffset_new(
                 config.preview_time,
@@ -995,7 +1001,7 @@ class MyApp(object):
         try:
             pos_offset = (sec_offset * 1000) / self.state.duration
             new_pos = 1
-            # get_state() 
+            # get_state()
             # {0: 'NothingSpecial',
             # 1: 'Opening',
             # 2: 'Buffering',
@@ -1010,7 +1016,7 @@ class MyApp(object):
                     new_pos = cur_pos + pos_offset
                 else:
                     # have to add this as the pos_offset is being send back as a postive and a negative
-                    new_pos =  1 + pos_offset
+                    new_pos = 1 + pos_offset
                 self.song = self.instance.media_player_new()
                 self.media = self.instance.media_new(self.original_file)
                 self.song.set_media(self.media)
@@ -1026,7 +1032,7 @@ class MyApp(object):
                     # self.log('playing none')
                     new_pos = self.song.get_position() + pos_offset
 
-            for itr,mark in enumerate(self.state.marks):
+            for itr, mark in enumerate(self.state.marks):
                 if not self.is_editing:
                     if mark.overlap(new_pos):
                         if forward:
@@ -1036,22 +1042,23 @@ class MyApp(object):
                         self.print_to_screen('Block {}'.format(itr + 1))
             warn_message = ""
 
-
             if new_pos < 0:
                 new_pos = 0
                 left = self.timeStamp(
                     self.state.duration,
                     self.song.get_position()
                 )
-                warn_message = 'the most you can jump backwards is {}'.format(left)
+                warn_message = 'the most you can jump backwards is {}'.format(
+                    left)
 
             if new_pos > 1:
                 new_pos = 1
                 left = self.timeStamp(
                     self.state.duration,
                     1 - self.song.get_position()
-                    )
-                warn_message = 'the most you can jump forwards is {}'.format(left)
+                )
+                warn_message = 'the most you can jump forwards is {}'.format(
+                    left)
 
             if message:
                 self.print_to_screen(warn_message)
@@ -1079,7 +1086,7 @@ class MyApp(object):
             new_pos = cur_pos + pos_offset
             # self.log(new_pos)
 
-            for itr,mark in enumerate(self.state.marks):
+            for itr, mark in enumerate(self.state.marks):
                 if not self.is_editing:
                     if mark.overlap(new_pos):
                         if forward:
@@ -1089,14 +1096,14 @@ class MyApp(object):
                         self.print_to_screen('Block {}'.format(itr + 1))
             warn_message = ""
 
-
             if new_pos < 0:
                 new_pos = 0
                 left = self.timeStamp(
                     self.state.duration,
                     self.song.get_position()
                 )
-                warn_message = 'the most you can jump backwards is {}'.format(left)
+                warn_message = 'the most you can jump backwards is {}'.format(
+                    left)
 
             if new_pos > 1:
                 self.log('past one')
@@ -1104,7 +1111,8 @@ class MyApp(object):
                 self.log(new_pos)
                 left = self.timeStamp(
                     self.state.duration, 1 - self.song.get_position())
-                warn_message = 'the most you can jump forwards is {}'.format(left)
+                warn_message = 'the most you can jump forwards is {}'.format(
+                    left)
 
             # check to see it is has stopped playing - have to start her again if it has
             if (self.song.get_state() == 6):
@@ -1121,7 +1129,7 @@ class MyApp(object):
         except Exception as ex:
             self.log(ex)
 
-    def timeStamp(self,duration,current):
+    def timeStamp(self, duration, current):
         out = duration * current
         try:
             millis = int(out)
@@ -1135,65 +1143,242 @@ class MyApp(object):
             if minutes >= 1:
                 time += "{} minutes ".format(minutes)
             if seconds >= 1:
-                time  += "{} seconds".format(seconds)
+                time += "{} seconds".format(seconds)
             return time
         except Exception as ex:
             self.song.log(ex)
 
+
 def printHelp():
-    print('Usage: vlc-edit [FILE]')
-    print('')
-    print('CREATING, SETTING AND SAVING BLOCKS')
-    print('To remove a section from a file, the user must create and save a block. When created, the block is in')
-    print('edit mode. The user can change the beginning and ending of each block. Once saved, the user can create')
-    print('new blocks. To edit an existing block, the user has to cycle through the existing blocks. It will place')
-    print('the user 2 seconds before the block unless the block starts at the beginning of the file')
-    print('To begin a new block press {}.'.format(chr(config.mark_create_new)))
-    print('To set the starting point of a block press {}.'.format(
-        chr(config.mark_record_start_position)))
-    print('To set the ending point of a block press {}.'.format(
-        chr(config.mark_record_end_position)))
-    print('To save the current block press {}.'.format(
-        chr(config.mark_save_current)))
-    print('To set a block from the beginning of the file to the current position press {}.'.format(
-        chr(config.block_from_begining)))
-    print('To set a block from the current location till the end of the file press {}.'.format(
-        chr(config.block_till_end)))
-    print('To delete the current block press {}.'.format(chr(config.delete_block)))
-    print('To edit existing blocks, press {} to cycle through blocks in edit mode.'.format(
-        chr(config.cycle_through_marks)))
-    print('To nudge a block beginning or ending, activate the block and press {}. It will ask beginning? If you want to '.format(chr(config.nudge)))
-    print('edit the beginning of the block press the Return key. If you want to edit the ending of the block enter e.')
-    print('Then it will ask to be continued')
-    print('')
-    print('MOVING THROUGH THE FILE')
-    print('To play or pause existing file press {}.'.format(config.play_pause_desc))
-    print('To jump ahead {} seconds press {}.'.format(
-        config.jump_time, (config.jump_forward_desc)))
-    print('To jump back {} seconds press {}.'.format(
-        config.jump_time, config.jump_back_desc))
-    print('To speed up play speed press {}.'.format((config.play_speed_up_desc)))
-    print('To slow down play speed press {}.'.format(
-        (config.play_speed_down_desc)))
-    print('To go back to normal play speed press {}.'.format(
-        chr(config.normal_speed)))
-    print('To jump to a specific time forward or backward press {}. This will stop the playing of the file and '.format(
-        chr(config.jump_specific)))
-    print('ask a few questions. First it will ask forward? No response will result in a forward jump, where as')
-    print('a - will result in a backward jump. Then it will ask for hours. Enter the number of hours or press')
-    print('return to accept as zero. Then it will ask for minutes and then seconds. After the amounts are entered')
-    print('it will jump that far ahead')
-    print('To quit the program press {}'.format(chr(config.quit_program)))
-    print('To apply the edits to the file, press {}'.format(
-        chr(config.begin_edits)))
-    print('')
-    print('OTHER COMMANDS')
-    print('To print out the current time, press {}'.format(
-        chr(config.current_time)))
-    print('To raise the volume of the sound effects, press {}'.format(
-        chr(config.volume_up)))
-    print('To lower the volume of the sound effects, press {}'.format(
-        chr(config.volume_down)))
+    final_output = []
+    final_output.append('Usage: vlc-edit [FILE]')
+    final_output.append("")
+    final_output.append('ON STARTING TO EDIT A FILE')
+    final_output.append("When a file is opened with vlc-edit, it will test the "
+        + "current format to see if it is compatible with vlc-edit. If it is "
+        + "not, it will create new file with the original file name with a "
+        +"'-original' before the file extension. If it is compatible, it will "
+        + "rename the file with '-original' before the extension. In both "
+        +"cases, a file with the orginal file name and extension '.state' will "
+        +"be created that saves the edit information.")
+    final_output.append("")
+    final_output.append('MOVING THROUGH FILE')
+    final_output.append(
+        'To play or pause the file press {}.'.format(config.play_pause_desc))
+    final_output.append("")
+
+
+
+
+
+    final_output.append("Pressing {} will speed up the playback while {} will slow it down. ".format(
+        config.play_speed_up_desc,
+        config.play_speed_down_desc
+    )
+        + "Pressing {} will return the playback to normal speed. ".format(
+            chr(config.normal_speed)
+    )
+    )
+    final_output.append("")
+
+
+
+
+
+
+
+
+
+
+
+
+    final_output.append("To jump forward press {}. To jump back press {}. {} ".format(
+        config.jump_forward_desc,
+        config.jump_back_desc,
+        config.jump_time_long,
+    )
+        + "seconds is the default number of seconds the forward and back jumps. "
+        + "traverse. The {} button will toggle between {} and {} second jumps ".format(
+            chr(config.change_advance_speed),
+            config.jump_time_long,
+            config.jump_time_short,
+    )
+    )
+    final_output.append("")
+
+
+    final_output.append( ("To jump to a specific time forward or backward press {}. ".format(
+        chr(config.jump_specific) ) )
+        + "This will stop the playing of the file and ask a few questions. First "
+        + "it will ask forward? No response will result in a forward jump, where "
+        + "as a - will result in a backward jump. Then it will ask for hours. "
+        + "Enter the number of hours or press return to accept as zero. Then it "
+        + "will ask for minutes and then seconds. After the amounts are entered "
+        + "it will jump that far.")
+    
+
+    final_output.append("")
+    final_output.append("CREATING BLOCK FOR REMOVAL")
+    final_output.append("To remove a section from a file, the user must start " 
+        + "and end a block. The create a new block, press {}. To end and save a ".format(chr(config.mark_record_start_position))
+        +"already started block press {}. In normal playback blocked section will ".format(chr(config.mark_record_end_position))
+        +"no longer be heard")
+    final_output.append("")
+    final_output.append("To remove from the current position to the beginning of "
+        +"the file press {}. This will overwrite any blocks made up to this point.".format(
+            chr(config.block_till_begining)
+        ))
+    final_output.append("")
+    final_output.append("To remove from the current position to the ending of "
+        +"the file press {}. This will overwrite any blocks made after this point.".format(
+            chr(config.block_till_end)
+        ))
+    final_output.append("")
+    final_output.append("MOVING THROUGH BLOCKS")
+    final_output.append("To preview the blocks made, the user can cycle through "
+        +"the existing blocks by pressing {}. It will take the user to {} seconds ".format(chr(config.cycle_through_marks),-config.preview_time)
+        +"before the first block and play. The edit should be evident. Pressing {} ".format(chr(config.cycle_through_marks))
+        +"again will take the user to the next block. If the user is at the last "
+        +"block, it will cycle back to the beginning.")
+    final_output.append("")
+    final_output.append("EDITING BLOCK")
+    final_output.append("To edit a block, the user must enter edit mode by "
+        +"pressing {}. Pressing {} again will toggle out of editing mode.".format(
+            chr(config.cycle_through_marks_editing),
+            chr(config.cycle_through_marks_editing)
+        ))
+    final_output.append("")
+    final_output.append("To edit each specific block starting and ending position, "
+        +"the user must cycle through the positions by pressing {} which selects ".format(chr(config.cycle_through_marks))
+        +"that block position for editing. This will take the user to the first "
+        +"block starting position and begin play. There will be an audio cue for "
+        +"the block position location. Press {} again to move to the ending position.".format(chr(config.cycle_through_marks)))
+    final_output.append("")
+    final_output.append("If a starting block is chosen, the user can overwrite "
+        +"the existing position with by pressing {}. If an ending postion is ".format(chr(config.mark_record_start_position))
+        +"chosen, the exisitng position can be overwritten by pressing {}.".format(chr(config.mark_record_end_position)))
+    final_output.append("")
+    final_output.append("The user also has the option to nudge the position "
+        +"forward or backward by {} seconds by pressing {} for backward and {} for ".format(
+            config.nudge_increment,
+            chr(config.nudge_back),
+            chr(config.nudge_forward)
+        )
+        +"forward. When the nudge function is used, it will move to {} seconds ".format(-config.preview_time)
+        +"before the new position and play it again.")
+    final_output.append("")
+    final_output.append("DELETING BLOCKS")
+    final_output.append("To delete a block, the user must be in or enter edit "
+        +"mode by pressing {} and then choose a block by cycling through the ".format(chr(config.cycle_through_marks_editing))
+        +"block by pressing {}. The user can be either at the starting position ".format(chr(config.cycle_through_marks))
+        +"or the ending position and by pressing {} can delete the curent block.".format(chr(config.delete_block)))
+    final_output.append("")
+    final_output.append("OTHER COMMANDS")
+    final_output.append("To print out the current time, press {}.".format(chr(config.current_time)))
+    final_output.append("")
+    final_output.append("To print the file length, press {}".format(chr(config.file_length)))
+    final_output.append("")
+    final_output.append("To push the edits out to a file with the original file "
+        +"name press {}.".format(chr(config.begin_edits)))
+    final_output.append("")
+    final_output.append("To quit the program press {}.".format(chr(config.quit_program)))
+    final_output.append("")
+    final_output.append("To export an existing block, the user must be in edit mode. "
+        + "The user can cycle through the blocks till the block for export is "
+        + "found and press {}. This will stop the playback and ask the user for ".format(chr(config.export_block_as_new_file))
+        + "a path and filename. It will perform the export and then return to "
+        + "regular playback.")
+
+    final_output.append("")
+    final_output.append("")
+    final_output.append("")
+    final_output.append("")
+    final_output.append("")
+    final_output.append("")
+
+
+
+
+#     print(
+
+# """
+# Usage: vlc-edit [FILE]
+
+# MOVING THROUGH THE FILE
+# To play or pause the file press *.
+# To  jump forward * seconds, press *
+
+# CREATING BLOCKS
+# To remove a section from a file, the user must start and a block. Pressing {}
+# creates and starts a new block in the current position. Pressing {} will end and
+# save the started block at it's current position.
+
+# """.format(
+#     config.play_pause_desc,
+#     chr(config.mark_record_start_position),
+#     chr(config.mark_record_end_position)
+# )
+    import textwrap
+    for input in final_output:
+        if input == "":
+            print("")
+        else:
+            wrapper = textwrap.TextWrapper(width=80)
+            word_list = wrapper.wrap(input)
+
+            for each in word_list:
+                print(each)
+
+    # print('To remove a section from a file, the user must start and end a block. When created, the block is in')
+    # print('edit mode. The user can change the beginning and ending of each block. Once saved, the user can create')
+    # print('new blocks. To edit an existing block, the user has to cycle through the existing blocks. It will place')
+    # print('the user 2 seconds before the block unless the block starts at the beginning of the file')
+    # print('To begin a new block press {}.'.format(chr(config.mark_create_new)))
+    # print('To set the starting point of a block press {}.'.format(
+    #     chr(config.mark_record_start_position)))
+    # print('To set the ending point of a block press {}.'.format(
+    #     chr(config.mark_record_end_position)))
+    # print('To save the current block press {}.'.format(
+    #     chr(config.mark_save_current)))
+    # print('To set a block from the beginning of the file to the current position press {}.'.format(
+    #     chr(config.block_till_begining)))
+    # print('To set a block from the current location till the end of the file press {}.'.format(
+    #     chr(config.block_till_end)))
+    # print('To delete the current block press {}.'.format(chr(config.delete_block)))
+    # print('To edit existing blocks, press {} to cycle through blocks in edit mode.'.format(
+    #     chr(config.cycle_through_marks)))
+    # print('To nudge a block beginning or ending, activate the block and press {}. It will ask beginning? If you want to '.format(chr(config.nudge)))
+    # print('edit the beginning of the block press the Return key. If you want to edit the ending of the block enter e.')
+    # print('Then it will ask to be continued')
+    # print('')
+    # print('MOVING THROUGH THE FILE')
+    # print('To play or pause existing file press {}.'.format(config.play_pause_desc))
+    # print('To jump ahead {} seconds press {}.'.format(
+    #     config.jump_time, (config.jump_forward_desc)))
+    # print('To jump back {} seconds press {}.'.format(
+    #     config.jump_time, config.jump_back_desc))
+    # print('To speed up play speed press {}.'.format((config.play_speed_up_desc)))
+    # print('To slow down play speed press {}.'.format(
+    #     (config.play_speed_down_desc)))
+    # print('To go back to normal play speed press {}.'.format(
+    #     chr(config.normal_speed)))
+    # print('To jump to a specific time forward or backward press {}. This will stop the playing of the file and '.format(
+    #     chr(config.jump_specific)))
+    # print('ask a few questions. First it will ask forward? No response will result in a forward jump, where as')
+    # print('a - will result in a backward jump. Then it will ask for hours. Enter the number of hours or press')
+    # print('return to accept as zero. Then it will ask for minutes and then seconds. After the amounts are entered')
+    # print('it will jump that far ahead')
+    # print('To quit the program press {}'.format(chr(config.quit_program)))
+    # print('To apply the edits to the file, press {}'.format(
+    #     chr(config.begin_edits)))
+    # print('')
+    # print('OTHER COMMANDS')
+    # print('To print out the current time, press {}'.format(
+    #     chr(config.current_time)))
+    # print('To raise the volume of the sound effects, press {}'.format(
+    #     chr(config.volume_up)))
+    # print('To lower the volume of the sound effects, press {}'.format(
+    #     chr(config.volume_down)))
 
 
 if __name__ == '__main__':
