@@ -154,6 +154,7 @@ class MyApp(object):
                 curses.doupdate()
 
                 key = self.window.getch()
+                self.keyStrokeLog(key)
 
                 # Raises the volume
                 if key == config.volume_up:
@@ -543,6 +544,15 @@ class MyApp(object):
         """
         self.rate = 1
         self.song.set_rate(self.rate)
+    
+    def keyStrokeLog(self, input):
+        input = chr(input)
+        with open(config.key_stroke_file, "a") as ksFile:
+            string = datetime.datetime.fromtimestamp(
+                time.time()).strftime('%Y-%m-%d %H:%M:%S')
+            string = string + ' - ' + input + '\n'
+            ksFile.write(string)
+
 
     def log(self, input):
         input = str(input)
