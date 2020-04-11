@@ -136,7 +136,7 @@ class MyApp(object):
         # don't print to the screen
         # libvlc_set_log_verbosity tooltip says its defunct
         self.VLC = vlc
-        self.VLC.libvlc_set_log_verbosity(None, 1)
+        # self.VLC.libvlc_set_log_verbosity(None, 1)
         self.instance = self.VLC.Instance(('--no-video'))
         self.song = self.instance.media_player_new()
         self.media = self.instance.media_new(self.original_file)
