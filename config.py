@@ -68,3 +68,6 @@ volume_increments = 0.5
 nudge_increment = 0.25
 preview_time = -2
 
+
+log_file = "log.txt"
+key_stroke_file = "keys.txt"

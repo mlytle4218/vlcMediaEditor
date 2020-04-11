@@ -546,7 +546,7 @@ class MyApp(object):
 
     def log(self, input):
         input = str(input)
-        with open("log.txt", "a") as myfile:
+        with open(config.log_file, "a") as myfile:
             string = datetime.datetime.fromtimestamp(
                 time.time()).strftime('%Y-%m-%d %H:%M:%S')
             string = string + ' - ' + input + '\n'
