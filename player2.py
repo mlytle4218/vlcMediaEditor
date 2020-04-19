@@ -140,6 +140,7 @@ class MyApp(object):
         self.instance = self.VLC.Instance(('--no-video'))
         self.song = self.instance.media_player_new()
         self.media = self.instance.media_new(self.original_file)
+        self.log("starting file {}".format(self.original_file))
         self.song.set_media(self.media)
 
         self.song.play()
@@ -174,19 +175,25 @@ class MyApp(object):
 
                 # Jumps back 5 seconds
                 elif key == config.jump_back:
-                    self.changePositionBySecondOffset_new(
-                        -self.advance_time,
-                        message=False,
-                        forward=False
+                    self.changePositionBySecondOffset_new2(
+                        -self.advance_time
                     )
+                    # self.changePositionBySecondOffset_new(
+                    #     -self.advance_time,
+                    #     message=False,
+                    #     forward=False
+                    # )
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
-                    self.changePositionBySecondOffset_new(
-                        self.advance_time,
-                        message=False,
-                        forward=True
+                    self.changePositionBySecondOffset_new2(
+                        self.advance_time
                     )
+                    # self.changePositionBySecondOffset_new(
+                    #     self.advance_time,
+                    #     message=False,
+                    #     forward=True
+                    # )
 
                 # pauses and plays the media
                 elif key == config.play_pause:
@@ -240,11 +247,11 @@ class MyApp(object):
                         self.log(ex)
 
                 # Stop cycling through marks
-                elif key == config.cycle_through_marks_stop:
-                    try:
-                        self.current_mark = None
-                    except Exception as ex:
-                        self.log(ex)
+                # elif key == config.cycle_through_marks_stop:
+                #     try:
+                #         self.current_mark = None
+                #     except Exception as ex:
+                #         self.log(ex)
 
                 # Quit the program
                 elif key == config.quit_program:
@@ -309,7 +316,7 @@ class MyApp(object):
                 elif key == config.export_block_as_new_file:
                     self.exportCurrentBlock()
 
-                elif key == 60:
+                elif key == config.cycle_through_marks_stop:
                     self.log('current blocks')
                     for mark in self.state.marks:
                         self.log(mark.get_time(self.state.duration))
@@ -553,7 +560,6 @@ class MyApp(object):
             string = string + ' - ' + input + '\n'
             ksFile.write(string)
 
-
     def log(self, input):
         input = str(input)
         with open(config.log_file, "a") as myfile:
@@ -677,8 +683,9 @@ class MyApp(object):
             if reverse:
                 seconds *= -1
 
-            self.changePositionBySecondOffset_new(
-                seconds
+            self.changePositionBySecondOffset_new2(
+                seconds,
+                message=True
             )
         self.song.play()
 
@@ -961,7 +968,9 @@ class MyApp(object):
             self.cycle_start = not self.cycle_start
 
         else:
-            self.changePositionBySecondOffset_new(
+            self.changePositionBySecondOffset_new2(
+                # changed to negative preview time, so it puts the user 
+                # preview time before the mark
                 config.preview_time,
                 cur_pos=self.state.marks[self.markItr].start
             )
@@ -998,6 +1007,98 @@ class MyApp(object):
         else:
             self.markItr = 0
 
+    def changePositionBySecondOffset_new2(self, sec_offset, cur_pos=None, message=False):
+        # new_pos = None
+        try:
+            pos_offset = (sec_offset * 1000) / self.state.duration
+
+            if (self.song.get_state() == 6):
+                # if the song has stopped and the the pos_offset is negative
+                # then the user is trying to jump back.
+                # restart the song and set the new position to the end minus the 
+                # off_set amount
+                if pos_offset < 0:
+                    self.log('pos_offset < 0')
+                    self.log(pos_offset)
+                    new_pos = 1.0 + pos_offset
+                    self.song = self.instance.media_player_new()
+                    self.media = self.instance.media_new(self.original_file)
+                    self.song.set_media(self.media)
+                    self.log("changePositionBySecondOffset_new:get_state() == 6")
+                    self.log(new_pos)
+                    self.song.play()
+                    self.song.set_position(new_pos)
+            else:
+
+                if cur_pos is None:
+                    # self.log(self.song.get_position())
+                    new_pos = self.song.get_position() + pos_offset
+                    self.log('new_pos: {}'.format(new_pos))
+                    self.log('song.get_position():{}'.format(self.song.get_position()))
+                    if 0 < new_pos < 1:
+                        self.song.play()
+                        self.song.set_position(new_pos)
+                    else:
+                        if new_pos < 0:
+                            if message:
+                                self.print_to_screen(
+                                    'the most you can jump backwards is {}'.format(
+                                        self.timeStamp(
+                                            self.state.duration,
+                                            self.song.get_position()
+                                        )
+                                    )
+                                )
+                        if new_pos >1:
+                            if message:
+                                self.print_to_screen(
+                                    'the most you can just forwards is {}'.format(
+                                        self.timeStamp(
+                                            self.state.duration,
+                                            1 - self.song.get_position()
+                                        )
+                                    )
+                                )
+
+                else:
+                    # the position was passed to the function, just make the change
+                    new_pos = cur_pos + pos_offset
+                    self.song.play()
+                    self.song.set_position(new_pos)
+
+
+                # if 0 < new_pos < 1:
+                #     pass
+                # else:
+                #     warn_message = ""
+
+                #     if new_pos < 0:
+                #         left = self.timeStamp(
+                #             self.state.duration,
+                #             self.song.get_position()
+                #         )
+                #         warn_message = 'the most you can jump backwards is {}'.format(
+                #             left)
+
+                #     if new_pos > 1:
+                #         left = self.timeStamp(
+                #             self.state.duration,
+                #             1 - self.song.get_position()
+                #         )
+                #         warn_message = 'the most you can jump forwards is {}'.format(
+                #             left)
+
+                #     self.print_to_screen(warn_message)
+
+                # self.song.set_position(new_pos)
+                # self.song.play()
+
+
+
+        except Exception as ex:
+            self.log('changePositionBySecondOffset_new')
+            self.log(ex)
+
     def changePositionBySecondOffset_new(self, sec_offset, cur_pos=None, message=True, forward=True):
         """
         Method to change the current position of the playing audio
@@ -1021,21 +1122,44 @@ class MyApp(object):
             # 5: 'Stopped',
             # 6: 'Ended',
             # 7: 'Error'}
+            #5 hours 53 minutes
+            if (self.song.get_state() == 7):
+                self.log("changePositionBySecondOffset_new:get_state() equals error")
+            if (self.song.get_state() == 5):
+                self.log("changePositionBySecondOffset_new:get_state() equals buffering")
+            if (self.song.get_state() == 2):
+                self.log("changePositionBySecondOffset_new:get_state() equals stopped")
+
+            
+
             if (self.song.get_state() == 6):
                 # Song has reached the end
+
+                
                 if cur_pos is not None:
                     new_pos = cur_pos + pos_offset
                 else:
                     # have to add this as the pos_offset is being send back as a postive and a negative
                     new_pos = 1 + pos_offset
+
+
+
+
+                if new_pos > 1:
+                    new_pos -= pos_offset
                 self.song = self.instance.media_player_new()
                 self.media = self.instance.media_new(self.original_file)
                 self.song.set_media(self.media)
+                self.log("changePositionBySecondOffset_new:get_state() == 6")
                 self.log(new_pos)
                 self.song.set_position(new_pos)
                 self.song.play()
             else:
                 # Song is in a play position
+
+
+
+
                 if cur_pos is not None:
                     # self.log('playing not none')
                     new_pos = cur_pos + pos_offset
@@ -1043,17 +1167,20 @@ class MyApp(object):
                     # self.log('playing none')
                     new_pos = self.song.get_position() + pos_offset
 
-            for itr, mark in enumerate(self.state.marks):
-                if not self.is_editing:
-                    if mark.overlap(new_pos):
-                        if forward:
-                            new_pos = mark.end + (new_pos - mark.start)
-                        else:
-                            new_pos = mark.start - (mark.end - new_pos)
-                        self.print_to_screen('Block {}'.format(itr + 1))
+
+
+            # for itr, mark in enumerate(self.state.marks):
+            #     if not self.is_editing:
+            #         if mark.overlap(new_pos):
+            #             if forward:
+            #                 new_pos = mark.end + (new_pos - mark.start)
+            #             else:
+            #                 new_pos = mark.start - (mark.end - new_pos)
+            #             self.print_to_screen('Block {}'.format(itr + 1))
             warn_message = ""
 
             if new_pos < 0:
+                self.log("new_pos < 0")
                 new_pos = 0
                 left = self.timeStamp(
                     self.state.duration,
@@ -1063,6 +1190,7 @@ class MyApp(object):
                     left)
 
             if new_pos > 1:
+                self.log('new_pos > 1')
                 new_pos = 1
                 left = self.timeStamp(
                     self.state.duration,

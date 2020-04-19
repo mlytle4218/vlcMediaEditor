@@ -55,6 +55,7 @@ class WT(threading.Thread):
                                     self.song.log(ex)
                             else:
                                 if self.last <= each.start <= self.song.current_position:
+                                    # self.song.log("each.start {}".format(each.start))
                                     # keep the marks iterator up to date on the location in the file
                                     self.song.markItr = itr
                                     self.song.updateIters()
