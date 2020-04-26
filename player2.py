@@ -155,7 +155,7 @@ class MyApp(object):
                 curses.doupdate()
 
                 key = self.window.getch()
-                self.keyStrokeLog(key)
+                # self.keyStrokeLog(key)
 
                 # Raises the volume
                 if key == config.volume_up:
@@ -186,8 +186,17 @@ class MyApp(object):
 
                 # Jump ahead five seconds
                 elif key == config.jump_forward:
+                    start = self.song.get_position()
                     self.changePositionBySecondOffset_new2(
                         self.advance_time
+                    )
+                    end = self.song.get_position()
+                    self.keyStrokeLog(
+                        "key jump_forward start:{} end:{} diff:{}".format(
+                            start,
+                            end,
+                            end-start
+                        )
                     )
                     # self.changePositionBySecondOffset_new(
                     #     self.advance_time,
@@ -553,7 +562,7 @@ class MyApp(object):
         self.song.set_rate(self.rate)
     
     def keyStrokeLog(self, input):
-        input = chr(input)
+        input = str(input)
         with open(config.key_stroke_file, "a") as ksFile:
             string = datetime.datetime.fromtimestamp(
                 time.time()).strftime('%Y-%m-%d %H:%M:%S')
