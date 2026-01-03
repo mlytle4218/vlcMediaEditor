@@ -10,6 +10,7 @@ from curses import panel
 from operator import itemgetter
 import pickle
 import shutil
+import re
 
 import config
 import sounds
@@ -99,15 +100,33 @@ class MyApp(object):
                 self.print_to_screen('converting file')
                 cmd = ['ffmpeg', '-y', '-i', os.path.realpath(
                     sys.argv[1]), '-ar', '44100', os.path.join(self.file_path, self.file_name_new)]
+                # self.log(cmd)
                 result = subprocess.run(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                lines = result.stdout.decode('utf-8').splitlines()
+                # self.log(result.stdout)
+                cmd2 = ['ffprobe', os.path.join(self.file_path, self.file_name_new)]
+                result2 = subprocess.run(
+                    cmd2, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+                lines = result2.stdout.decode('utf-8').splitlines()
                 for line in lines:
-                    for word in line.split():
-                        if word.startswith('time='):
-                            time_temp = word.split("=")[1].split(":")
-                            time = int(time_temp[0]) * 3600 + int(time_temp[1]
-                                                                  )*60 + round(float(time_temp[2]))
+                    # self.log(line)
+                    if "Duration" in line:
+                        # self.log("durrrraaaatiiiooonnnn")
+                        # self.log(line)
+                        # m = re.search('\d\d:\d\d:d\d.\d\d', line)
+                        m = re.search('\\d\\d:\\d\\d:\\d\\d', line)
+                        # self.log(m.group(0))
+                        time_temp = m.group(0).split(":")
+
+                        time = int(time_temp[0]) * 3600 + int(time_temp[1]
+                                                                )*60 + round(float(time_temp[2]))
+                    # for word in line.split():
+                    #     if word.startswith('time='):
+                    #         self.log("word:" + word)
+                    #         time_temp = word.split("=")[1].split(":")
+                    #         time = int(time_temp[0]) * 3600 + int(time_temp[1]
+                    #                                               )*60 + round(float(time_temp[2]))
 
                 quick_state = State()
                 quick_state.marks = []
@@ -147,6 +166,8 @@ class MyApp(object):
         self.media.parse()
         self.poll_thread = WT(self)
         self.poll_thread.start()
+
+        self.keyStrokeLog(260)
 
         try:
             while True:
@@ -191,13 +212,13 @@ class MyApp(object):
                         self.advance_time
                     )
                     end = self.song.get_position()
-                    self.keyStrokeLog(
-                        "key jump_forward start:{} end:{} diff:{}".format(
-                            start,
-                            end,
-                            end-start
-                        )
-                    )
+                    # self.keyStrokeLog(
+                    #     "key jump_forward start:{} end:{} diff:{}".format(
+                    #         start,
+                    #         end,
+                    #         end-start
+                    #     )
+                    # )
                     # self.changePositionBySecondOffset_new(
                     #     self.advance_time,
                     #     message=False,
@@ -227,6 +248,7 @@ class MyApp(object):
                 elif key == config.mark_record_start_position:
                     try:
                         self.startMarkPosition()
+                        self.keyStrokeLog(key)    
                     except Exception as ex:
                         self.log(ex)
 
@@ -234,6 +256,7 @@ class MyApp(object):
                 elif key == config.mark_record_end_position:
                     try:
                         self.endMarkPosition()
+                        self.keyStrokeLog(key) 
                     except Exception as ex:
                         self.log(ex)
 
@@ -297,11 +320,13 @@ class MyApp(object):
                 # current position
                 elif key == config.block_till_begining:
                     self.begining_ending_block(True)
+                    self.keyStrokeLog(key) 
 
                 # creates a mark that starts from the current position to the end
                 # fo the file
                 elif key == config.block_till_end:
                     self.begining_ending_block(False)
+                    self.keyStrokeLog(key) 
 
                 elif key == config.jump_to_start:
                     self.log('jump_to_start')
@@ -336,7 +361,7 @@ class MyApp(object):
         self.panel.hide()
         panel.update_panels()
         curses.doupdate()
-        curses.endwin()
+        #curses.endwin()
 
     def getCurrentTime(self):
         cur_time = ""
@@ -439,6 +464,7 @@ class MyApp(object):
         try:
             state = open(self.state_file_name, 'rb')
             self.state = pickle.load(state)
+            #self.log(self.state)
             return True
         except IOError:
             self.log("No state file found")
@@ -562,11 +588,11 @@ class MyApp(object):
         self.song.set_rate(self.rate)
     
     def keyStrokeLog(self, input):
-        input = str(input)
+        # input = str(input)
         with open(config.key_stroke_file, "a") as ksFile:
             string = datetime.datetime.fromtimestamp(
                 time.time()).strftime('%Y-%m-%d %H:%M:%S')
-            string = string + ' - ' + input + '\n'
+            string = string + ' - ' + chr(input) + '\n'
             ksFile.write(string)
 
     def log(self, input):
@@ -869,8 +895,10 @@ class MyApp(object):
         # edited_file = filename + "-edited" + file_extension
         # edited_file = self.old_file_name
         command = ['ffmpeg', '-i', self.original_file]
-        select = "select='"
-        aselect = "aselect='"
+        # select = "select='"
+        # aselect = "aselect='"
+        select = ""
+        aselect = ""
 
         # this reorganizes the marks to represent the blocks between the 'removed'
         # blocks
@@ -892,27 +920,40 @@ class MyApp(object):
             filter(lambda item: item.start != item.end, local_marks))
 
         for i, each in enumerate(local_marks):
-            if i == 0:
-                select += """between(t,{},{})""".format(
-                    (self.mark_to_milliseconds(each.start) / 1000),
-                    (self.mark_to_milliseconds(each.end) / 1000),
-                )
-                aselect += """between(t,{},{})""".format(
-                    (self.mark_to_milliseconds(each.start) / 1000),
-                    (self.mark_to_milliseconds(each.end) / 1000),
-                )
-            else:
-                select += """+between(t,{},{})""".format(
-                    (self.mark_to_milliseconds(each.start) / 1000),
-                    (self.mark_to_milliseconds(each.end) / 1000),
-                )
-                aselect += """+between(t,{},{})""".format(
-                    (self.mark_to_milliseconds(each.start) / 1000),
-                    (self.mark_to_milliseconds(each.end) / 1000),
-                )
+            select += """select='between(t\\,{}\\,{})',""".format(
+                (self.mark_to_milliseconds(each.start) / 1000),
+                (self.mark_to_milliseconds(each.end) / 1000),
+            )
+            aselect += """aselect='between(t\\,{}\\,{})',""".format(
+                (self.mark_to_milliseconds(each.start) / 1000),
+                (self.mark_to_milliseconds(each.end) / 1000),
+            )
 
-        select += """',setpts=N/FRAME_RATE/TB """
-        aselect += """',asetpts=N/SR/TB"""
+
+            # if i == 0:
+            #     select += """between(t,{},{})""".format(
+            #         (self.mark_to_milliseconds(each.start) / 1000),
+            #         (self.mark_to_milliseconds(each.end) / 1000),
+            #     )
+            #     aselect += """between(t,{},{})""".format(
+            #         (self.mark_to_milliseconds(each.start) / 1000),
+            #         (self.mark_to_milliseconds(each.end) / 1000),
+            #     )
+            # else:
+            #     select += """+between(t,{},{})""".format(
+            #         (self.mark_to_milliseconds(each.start) / 1000),
+            #         (self.mark_to_milliseconds(each.end) / 1000),
+            #     )
+            #     aselect += """+between(t,{},{})""".format(
+            #         (self.mark_to_milliseconds(each.start) / 1000),
+            #         (self.mark_to_milliseconds(each.end) / 1000),
+            #     )
+
+        # select += """',setpts=N/FRAME_RATE/TB """
+        # aselect += """',asetpts=N/SR/TB"""
+
+        select += """setpts=N/FRAME_RATE/TB """
+        aselect += """asetpts=N/SR/TB"""
         command.append('-vf')
         command.append(select)
         command.append('-af')
@@ -1296,8 +1337,6 @@ class MyApp(object):
         except Exception as ex:
             self.song.log(ex)
 
-
-
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         if sys.argv[1] == '--help' or sys.argv[1] == '-h':
@@ -1306,15 +1345,17 @@ if __name__ == '__main__':
         else:
             final_command = None
             curses.wrapper(MyApp)
-            curses.endwin()
+            #curses.endwin()
             if final_command:
-                process = subprocess.Popen(
-                    final_command, stdout=subprocess.PIPE, universal_newlines=True)
-                while True:
-                    output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
-                        break
-                    if output:
-                        print(output.strip())
+                # print(final_command)
+                print(" ".join(final_command))
+                # process = subprocess.Popen(
+                #     final_command, stdout=subprocess.PIPE, universal_newlines=True)
+                # while True:
+                #     output = process.stdout.readline()
+                #     if output == '' and process.poll() is not None:
+                #         break
+                #     if output:
+                #         print(output.strip())
     else:
         print("requires a file to edit")

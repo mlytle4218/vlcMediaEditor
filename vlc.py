@@ -47,7 +47,8 @@ import sys
 import functools
 
 # Used by EventManager in override.py
-from inspect import getargspec
+import inspect
+# from inspect import getargspec
 
 import logging
 logger = logging.getLogger(__name__)

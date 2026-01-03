@@ -29,3 +29,6 @@ rusty.state
 cnn-senate-trial-01252020.mp3
 cnn-senate-trial-01252020.state
 keys.txt
+*.mp3
+*.mp4
+

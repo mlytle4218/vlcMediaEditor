@@ -56,12 +56,12 @@ def printHelp():
         +"no longer be heard")
     final_output.append("")
     final_output.append("To remove from the current position to the beginning of "
-        +"the file press {}. This will overwrite any blocks made up to this point.".format(
+        +"the file press capitol {}. This will overwrite any blocks made up to this point.".format(
             chr(config.block_till_begining)
         ))
     final_output.append("")
     final_output.append("To remove from the current position to the ending of "
-        +"the file press {}. This will overwrite any blocks made after this point.".format(
+        +"the file press capitol {}. This will overwrite any blocks made after this point.".format(
             chr(config.block_till_end)
         ))
     final_output.append("")
@@ -74,7 +74,7 @@ def printHelp():
     final_output.append("")
     final_output.append("EDITING BLOCK")
     final_output.append("To edit a block, the user must enter edit mode by "
-        +"pressing {}. Pressing {} again will toggle out of editing mode.".format(
+        +"pressing capitol {}. Pressing capitol {} again will toggle out of editing mode.".format(
             chr(config.cycle_through_marks_editing),
             chr(config.cycle_through_marks_editing)
         ))
@@ -100,7 +100,7 @@ def printHelp():
     final_output.append("")
     final_output.append("DELETING BLOCKS")
     final_output.append("To delete a block, the user must be in or enter edit "
-        +"mode by pressing {} and then choose a block by cycling through the ".format(chr(config.cycle_through_marks_editing))
+        +"mode by pressing capitol {} and then choose a block by cycling through the ".format(chr(config.cycle_through_marks_editing))
         +"block by pressing {}. The user can be either at the starting position ".format(chr(config.cycle_through_marks))
         +"or the ending position and by pressing {} can delete the curent block.".format(chr(config.delete_block)))
     final_output.append("")
