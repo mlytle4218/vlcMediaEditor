@@ -1,0 +1,34 @@
+ffmpeg -i jon-wolfert-09072025-original.mp3 -vf select='between(t,7440.092,7491.155)+between(t,7507.532,7578.535)',setpts=N/FRAME_RATE/TB -af aselect='between(t,7440.092,7491.155)+between(t,7507.532,7578.535)',asetpts=N/SR/TB jon-wolfert-09072025-2.mp3
+
+
+ffmpeg -i jon-wolfert-09072025-original.mp3\             
+-vf select='between(t\,7000\,7100)',select='between(t\ ,7150\,7300)',setpts=N/FRAME_RATE/TB \
+-af aselect='between(t\,7000\,7100)',aselect='between(t\,7150\,7300)',asetpts=N/SR/TB \
+ /home/chime/jon-wolfert-trial.mp3
+
+ ffmpeg -i jon-wolfert-09072025-original.mp3\
+-vf select='between(t\,7440.092\,7491)',select='between(t\,7507\,7578)',setpts=N/FRAME_RATE/TB \
+-af aselect='between(t\,7440.092\,7491)',aselect='between(t\,7507\,7578)',asetpts=N/SR/TB \
+ /home/chime/jon-wolfert-trial.mp3
+
+
+
+ ffmpeg -i jon-wolfert-09072025-original.mp3 -filter_complex "[0:v]trim=duration=30[av];[0:a]atrim=duration=30[aa]; [0:v]trim=start=40:end=50,setpts=PTS-STARTPTS[bv]; [0:a]atrim=start=40:end=50,asetpts=PTS-STARTPTS[ba]; [av][bv]concat[cv];[aa][ba]concat=v=0:a=1[ca]; [0:v]trim=start=80,setpts=PTS-STARTPTS[dv]; [0:a]atrim=start=80,asetpts=PTS-STARTPTS[da]; [cv][dv]concat[outv];[ca][da]concat=v=0:a=1[outa]" -map [outv] -map [outa] out.mp3
+
+
+ ffmpeg -i jon-wolfert-09072025-original.mp3 -filter_complex "[0:a]trim=duration=30[a]; [0:a]trim=start=40:end=50,asetpts=PTS-STARTPTS[b]; [a][b]concat[c]; [0:a]trim=start=80,asetpts=PTS-STARTPTS[d]; [c][d]concat[out1]" -map [out1] out.mp3
+
+
+ ffmpeg -i input.mp3 -filter_complex \
+"[0:a]atrim=end=<start1>,asetpts=PTS-STARTPTS[a1]; \
+[0:a]atrim=start=<end1>:end=<start2>,asetpts=PTS-STARTPTS[a2]; \
+[0:a]atrim=start=<end2>,asetpts=PTS-STARTPTS[a3]; \
+[a1][a2][a3]concat=n=3:v=0:a=1[out]" \
+-map "[out]" output.mp3
+
+ffmpeg -i jon-wolfert-09072025-original.mp3 -filter_complex \
+"[0:a]atrim=end=100,asetpts=PTS-STARTPTS[a1]; \
+[0:a]atrim=start=200:end=400,asetpts=PTS-STARTPTS[a2]; \
+[0:a]atrim=start=500,asetpts=PTS-STARTPTS[a3]; \
+[a1][a2][a3]concat=n=3:v=0:a=1[out]" \
+-map "[out]" output.mp3
