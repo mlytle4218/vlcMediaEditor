@@ -43,6 +43,8 @@ class MyApp(object):
         self.applyEditsBoolean = False
         self.cycle_start = True
         self.advance_time = config.jump_time_long
+        self.audio = False
+        self.video = False
 
         self.screen = stdscreen
 
@@ -67,6 +69,16 @@ class MyApp(object):
         self.file_basename = os.path.basename(sys.argv[1])
         self.file_name = os.path.splitext(self.file_basename)[0]
         self.file_ext = os.path.splitext(self.file_basename)[1]
+
+
+        stream_command = ["ffprobe","-loglevel","error","-show_entries","stream=codec_type","-of","json", self.file_path+"/"+self.original_file]
+        result = subprocess.run(stream_command, capture_output=True, text=True, check=True)
+        python_dict = json.loads(result.stdout)
+        for each in python_dict['streams']:
+            if each['codec_type'] == 'audio':
+                self.audio = True
+            elif each['codec_type'] == 'video':
+                self.video = True
 
         # if opening a backup, look for a state file with the original name
         self.state_file_name = ""
@@ -884,6 +896,12 @@ class MyApp(object):
             filter(lambda x: x.is_null() != True, self.state.marks))
         self.log('check_for_null_blocks')
 
+    def check_for_codecs(self):
+        """
+        not sure yet
+        """
+        pass
+
     def applyEdits(self, local_marks):
         """
         Method to create the final command for editing the original file.
@@ -891,14 +909,11 @@ class MyApp(object):
         self.song.stop()
         self.check_for_null_blocks()
 
-        # filename, file_extension = os.path.splitext(self.original_file)
-        # edited_file = filename + "-edited" + file_extension
-        # edited_file = self.old_file_name
-        command = ['ffmpeg', '-i', self.original_file]
-        # select = "select='"
-        # aselect = "aselect='"
-        select = ""
-        aselect = ""
+
+
+
+
+        end_command = ['ffmpeg', '-i', self.original_file, '-filter_complex']
 
         # this reorganizes the marks to represent the blocks between the 'removed'
         # blocks
@@ -919,48 +934,118 @@ class MyApp(object):
         local_marks = list(
             filter(lambda item: item.start != item.end, local_marks))
 
-        for i, each in enumerate(local_marks):
-            select += """select='between(t\\,{}\\,{})',""".format(
-                (self.mark_to_milliseconds(each.start) / 1000),
-                (self.mark_to_milliseconds(each.end) / 1000),
-            )
-            aselect += """aselect='between(t\\,{}\\,{})',""".format(
-                (self.mark_to_milliseconds(each.start) / 1000),
-                (self.mark_to_milliseconds(each.end) / 1000),
-            )
+        count = 0
+
+        self.log(end_command)
 
 
-            # if i == 0:
-            #     select += """between(t,{},{})""".format(
-            #         (self.mark_to_milliseconds(each.start) / 1000),
-            #         (self.mark_to_milliseconds(each.end) / 1000),
-            #     )
-            #     aselect += """between(t,{},{})""".format(
-            #         (self.mark_to_milliseconds(each.start) / 1000),
-            #         (self.mark_to_milliseconds(each.end) / 1000),
-            #     )
-            # else:
-            #     select += """+between(t,{},{})""".format(
-            #         (self.mark_to_milliseconds(each.start) / 1000),
-            #         (self.mark_to_milliseconds(each.end) / 1000),
-            #     )
-            #     aselect += """+between(t,{},{})""".format(
-            #         (self.mark_to_milliseconds(each.start) / 1000),
-            #         (self.mark_to_milliseconds(each.end) / 1000),
-            #     )
+        if self.audio:
+            aselect="\""
+            acount = 0
+            for lm in local_marks:
+                acount += 1
+                aselect += """[0:a]atrim=start={}:end={},asetpts=PTS-STARTPTS[a{}];""".format(
+                    (self.mark_to_milliseconds(lm.start) / 1000),
+                    (self.mark_to_milliseconds(lm.end) / 1000),
+                    acount
+                )
+            aconcat = ""
+            for each in range(acount):
+                aconcat += "[a{}]".format(each+1)
+            aconcat += "concat=n={}:v=0:a=1[aout]\"".format(acount)
+            end_command.append(aselect)
+            end_command.append(aconcat)
+            end_command.append("-map [aout]")
+
+        # if self.video:
+        #     select="\""
+        #     count = 0
+        #     for lm in local_marks:
+        #         count += 1
+        #         select += """[0:v]trim=start={}:end={},setpts=PTS-STARTPTS[v{}];""".format(
+        #             (self.mark_to_milliseconds(lm.start) / 1000),
+        #             (self.mark_to_milliseconds(lm.end) / 1000),
+        #             count
+        #         )
+        #     concat = ""
+        #     track = []
+        #     for each in range(count):
+        #         track.append(each+1)
+
+        #     cat_count = 1
+
+        #     if len(track) > 1:
+        #         temp1 = track.pop(0)
+        #         temp2 = track.pop(0)
+        #         concat += "[v{}]".format(temp1)
+        #         concat += "[v{}]".format(temp2)
+        #         concat += "concat[vout{}]; ".format(cat_count)
+        #         while len(track) > 0:
+        #             concat += "[v{}]".format(track.pop(0))
+        #             concat += "[vout{}]".format(cat_count)
+        #             cat_count+= 1
+        #             if len(track) > 0:
+        #                 concat += "concat[vout{}]; ".format(cat_count)
+        #             else:
+        #                 concat += "concat[vout]; ".format(cat_count)
+
+                        
+
+
+
+            # for each in range(count):
+            #     concat += "[v{}]".format(each+1)
+            # concat += "concat[vout]\"".format(count)
+            # end_command.append(select)
+            # end_command.append(concat)
+            # end_command.append("-map [vout]")
+
+
+
+        # select = "\""
+
+        # for i, each in enumerate(local_marks):
+        #     count +=1
+        #     if self.audio:
+        #         aselect += """[0:a]atrim=start={}:end={},asetpts=PTS-STARTPTS[a{}];""".format(
+        #             (self.mark_to_milliseconds(each.start) / 1000),
+        #             (self.mark_to_milliseconds(each.end) / 1000),
+        #             count
+        #         )
+        #     if self.video:
+        #         select += """[0:v]trim=start={}:end={},setpts=PTS-STARTPTS[v{}];""".format(
+        #             (self.mark_to_milliseconds(each.start) / 1000),
+        #             (self.mark_to_milliseconds(each.end) / 1000),
+        #             count
+        #         )
+
+        
+
+
+        # [a1][a2][a3]concat=n=3:v=0:a=1[out]"
+        # concat = ""
+        # for each in range(count):
+        #     concat += "[a{}]".format(each+1)
+        # concat += "concat=n={}:v=0:a=1[out]\"".format(count)
+        # select+="\""
+
+
 
         # select += """',setpts=N/FRAME_RATE/TB """
         # aselect += """',asetpts=N/SR/TB"""
 
-        select += """setpts=N/FRAME_RATE/TB """
-        aselect += """asetpts=N/SR/TB"""
-        command.append('-vf')
-        command.append(select)
-        command.append('-af')
-        command.append(aselect)
-        command.append(self.output_file_name)
-        self.log(command)
-        return command
+        # select += """setpts=N/FRAME_RATE/TB """
+        # aselect += """asetpts=N/SR/TB"""
+        # command.append('-vf')
+        # command.append(aselect)
+        # command.append(concat)
+
+        # command.append('-af')
+        # command.append(aselect)
+        # end_command.append("-map [out]") # output.mp3
+        end_command.append(self.output_file_name)
+        self.log(end_command)
+        return end_command
 
     def createFfmpegCommand(self, local_mark):
         """
@@ -1348,14 +1433,14 @@ if __name__ == '__main__':
             #curses.endwin()
             if final_command:
                 # print(final_command)
-                print(" ".join(final_command))
-                # process = subprocess.Popen(
-                #     final_command, stdout=subprocess.PIPE, universal_newlines=True)
-                # while True:
-                #     output = process.stdout.readline()
-                #     if output == '' and process.poll() is not None:
-                #         break
-                #     if output:
-                #         print(output.strip())
+                # print(" ".join(final_command))
+                process = subprocess.Popen(
+                    final_command, stdout=subprocess.PIPE, universal_newlines=True)
+                while True:
+                    output = process.stdout.readline()
+                    if output == '' and process.poll() is not None:
+                        break
+                    if output:
+                        print(output.strip())
     else:
         print("requires a file to edit")

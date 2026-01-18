@@ -32,3 +32,38 @@ ffmpeg -i jon-wolfert-09072025-original.mp3 -filter_complex \
 [0:a]atrim=start=500,asetpts=PTS-STARTPTS[a3]; \
 [a1][a2][a3]concat=n=3:v=0:a=1[out]" \
 -map "[out]" output.mp3
+
+
+
+ffprobe -v error -show_entries stream=codec_type -of default=nw=1 yourfile.mp4
+
+
+ffmpeg -i end-original.mpg -filter_complex "[0:a]atrim=start=13.5:end=18.0,asetpts=PTS-STARTPTS[a1];[0:a]atrim=start=27.0:end=45.0,asetpts=PTS-STARTPTS[a2];[0:a]atrim=start=72.0:end=90.0,asetpts=PTS-STARTPTS[a3]; [a1][a2][a3]concat=n=3:v=0:a=1[aout]" -map [aout] "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v1][v2][v3]concat[vout]" -map [vout] /home/marc/programs/vlcMediaEditor/end2.mpg
+ffmpeg -i end-original.mpg -filter_complex "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v1][v2]concat[vout1]; [vout1][v3]concat[vout]" -map [vout] /home/marc/programs/vlcMediaEditor/end2.mpg
+
+
+
+
+ffmpeg -i end-original.mpg -filter_complex "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v0][v1]concat[vout1]; [v2][vount1]concat[vout2];  -map [vout] /home/marc/programs/vlcMediaEditor/end.mpg"
+
+
+ffmpeg -i end-original.mpg -filter_complex "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v0][v1]concat[vout1]; [v2][vount1]concat[vout];  -map [vout] /home/marc/programs/vlcMediaEditor/end.mpg"
+
+
+ffmpeg -i end-original.mpg -filter_complex  "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v0][v1]concat[vout1]; [v2][vout1]concat[vout];  -map [vout] /home/marc/programs/vlcMediaEditor/end.mpg"
+
+
+ffmpeg -i end-original.mpg -filter_complex "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v1][v2][v3]concat=n=3:v=1:a=1[vout];  -map [vout] /home/marc/programs/vlcMediaEditor/end.mpg"
+
+
+ffmpeg -i end-original.mpg -filter_complex "[0:v]trim=start=13.5:end=18.0,setpts=PTS-STARTPTS[v1];[0:v]trim=start=27.0:end=45.0,setpts=PTS-STARTPTS[v2];[0:v]trim=start=72.0:end=90.0,setpts=PTS-STARTPTS[v3]; [v1][v2]concat[vout1]; [v3][vout1]concat[vout];  -map [vout] /home/marc/programs/vlcMediaEditor/end.mpg
+
+
+
+
+
+[v0][v1][v2][v3][v4]concat=n=5:v=1:a=0,format=yuv420p[v]
+n
+
+
+
