@@ -949,12 +949,22 @@ class MyApp(object):
                     (self.mark_to_milliseconds(lm.end) / 1000),
                     acount
                 )
-            aconcat = ""
+            # aconcat = ""
+            # for each in range(acount):
+            #     aconcat += "[a{}]".format(each+1)
+            # aconcat += "concat=n={}:v=0:a=1[aout];\"".format(acount)
+            # end_command.append(aselect)
+            # end_command.append(aconcat)
+            # end_command.append("-map [aout]")
+
+
+            aselect += " "
             for each in range(acount):
-                aconcat += "[a{}]".format(each+1)
-            aconcat += "concat=n={}:v=0:a=1[aout]\"".format(acount)
+                aselect += "[a{}]".format(each+1)
+            aselect += "concat=n={}:v=0:a=1[aout];\"".format(acount)
+            self.log(aselect)
             end_command.append(aselect)
-            end_command.append(aconcat)
+            # end_command.append(aselect)
             end_command.append("-map [aout]")
 
         # if self.video:
@@ -1045,7 +1055,9 @@ class MyApp(object):
         # end_command.append("-map [out]") # output.mp3
         end_command.append(self.output_file_name)
         self.log(end_command)
-        return end_command
+        self.log(" ".join(end_command))
+        # return end_command
+        return " ".join(end_command)
 
     def createFfmpegCommand(self, local_mark):
         """
@@ -1435,7 +1447,7 @@ if __name__ == '__main__':
                 # print(final_command)
                 # print(" ".join(final_command))
                 process = subprocess.Popen(
-                    final_command, stdout=subprocess.PIPE, universal_newlines=True)
+                    final_command, stdout=subprocess.PIPE, universal_newlines=True, shell=True)
                 while True:
                     output = process.stdout.readline()
                     if output == '' and process.poll() is not None:
